@@ -1,0 +1,1 @@
+echo App\Models\Product::where('size', '8x12x4')-; 

@@ -1,0 +1,130 @@
+<?php
+
+use App\Http\Controllers\Dashboard\DashboardController;
+use App\Http\Controllers\Laporan\ArusKasController;
+use App\Http\Controllers\Laporan\BukuBesarController;
+use App\Http\Controllers\Laporan\IncomeStatementController;
+use App\Http\Controllers\Laporan\JurnalController;
+use App\Http\Controllers\Laporan\NeracaController;
+use App\Http\Controllers\Laporan\NeracaSaldoController;
+use App\Http\Controllers\Login\AuthController;
+use App\Http\Controllers\Master\ChartOfAccountController;
+use App\Http\Controllers\Master\KategoriController;
+use App\Http\Controllers\Master\ProductController;
+use App\Http\Controllers\Pengaturan\SettingsController;
+use App\Http\Controllers\Transaksi\CashTransactionController;
+use App\Http\Controllers\Transaksi\KasKeluarController;
+use App\Http\Controllers\Transaksi\KasMasukController;
+use App\Http\Controllers\Transaksi\SalesReturnController;
+use App\Http\Controllers\Transaksi\TransaksiController;
+use Illuminate\Support\Facades\Route;
+
+Route::get('/', function () {
+    return view('landing');
+});
+
+Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+Route::post('/login', [AuthController::class, 'login'])->name('login.submit');
+Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
+Route::post('/register', [AuthController::class, 'register'])->name('register.submit');
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+
+Route::middleware('auth')->group(function () {
+    Route::get('/storage/{path}', function ($path) {
+        $filePath = storage_path('app/public/'.$path);
+        if (! file_exists($filePath)) {
+            abort(404);
+        }
+
+        return response()->fileubah($filePath);
+    })->where('path', '.*');
+
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/api/dashboard-data', [DashboardController::class, 'apiData'])->name('api.dashboard.data');
+
+    Route::get('/transaksi', [TransaksiController::class, 'index'])->name('transaksi.index');
+    Route::get('/transaksi-kas', [CashTransactionController::class, 'index'])->name('cash.index');
+    Route::resource('kas-masuk', KasMasukController::class);
+    Route::resource('kas-keluar', KasKeluarController::class);
+    Route::resource('sales-return', SalesReturnController::class);
+
+    Route::prefix('cash')->group(function () {
+        Route::get('/', [ArusKasController::class, 'index'])->name('cash.flow.index');
+        Route::get('/api/data', [ArusKasController::class, 'apiCashFlow'])->name('api.cash.flow');
+        Route::get('/api/{type}/{id}', [ArusKasController::class, 'getTransactionDetail'])->name('api.cash.detail');
+        Route::delete('/destroy-bulk', [ArusKasController::class, 'destroyBulk'])->name('cash.destroyBulk');
+
+        Route::get('/in/create', [CashTransactionController::class, 'createIn'])->name('cash.in.create');
+        Route::get('/out/create', [CashTransactionController::class, 'createOut'])->name('cash.out.create');
+
+        Route::get('/in/get-items', [KasMasukController::class, 'getCategoryItems'])->name('cash.in.getItems');
+        Route::post('/in', [KasMasukController::class, 'store'])->name('cash.in.store');
+        Route::get('/in/{kasMasuk}', [KasMasukController::class, 'show'])->name('cash.in.show');
+        Route::put('/in/{kasMasuk}', [KasMasukController::class, 'update'])->name('cash.in.update');
+        Route::delete('/in/{kasMasuk}', [KasMasukController::class, 'destroy'])->name('cash.in.destroy');
+
+        Route::get('/out/get-items', [KasKeluarController::class, 'getCategoryItems'])->name('cash.out.getItems');
+        Route::post('/out', [KasKeluarController::class, 'store'])->name('cash.out.store');
+        Route::get('/out/{kasKeluar}', [KasKeluarController::class, 'show'])->name('cash.out.show');
+        Route::put('/out/{kasKeluar}', [KasKeluarController::class, 'update'])->name('cash.out.update');
+        Route::delete('/out/{kasKeluar}', [KasKeluarController::class, 'destroy'])->name('cash.out.destroy');
+    });
+
+    Route::prefix('master')->group(function () {
+        Route::get('/categories', [KategoriController::class, 'index'])->name('master.categories');
+        Route::get('/categories/create', [KategoriController::class, 'create'])->name('master.categories.create');
+        Route::post('/categories', [KategoriController::class, 'store'])->name('master.categories.store');
+        Route::get('/categories/{id}/edit', [KategoriController::class, 'edit'])->name('master.categories.edit');
+        Route::put('/categories/{id}', [KategoriController::class, 'update'])->name('master.categories.update');
+        Route::delete('/categories/bulk', [KategoriController::class, 'destroyBulk'])->name('master.categories.destroyBulk');
+        Route::get('/categories/{type}', [KategoriController::class, 'getCategoriesByType'])->name('master.categories.byType');
+        Route::delete('/categories/{id}', [KategoriController::class, 'destroy'])->name('master.categories.destroy');
+
+        Route::get('/accounts', [ChartOfAccountController::class, 'index'])->name('master.accounts');
+        Route::post('/accounts', [ChartOfAccountController::class, 'store'])->name('master.accounts.store');
+        Route::put('/accounts/{account}', [ChartOfAccountController::class, 'update'])->name('master.accounts.update');
+        Route::delete('/accounts/{account}', [ChartOfAccountController::class, 'destroy'])->name('master.accounts.destroy');
+        Route::patch('/accounts/{account}/toggle', [ChartOfAccountController::class, 'toggleStatus'])->name('master.accounts.toggle');
+        Route::delete('/accounts', [ChartOfAccountController::class, 'destroyBulk'])->name('master.accounts.destroyBulk');
+
+        Route::get('/products/menu', [ProductController::class, 'menu'])->name('master.products.menu');
+        Route::get('/products', [ProductController::class, 'index'])->name('master.products.index');
+
+        Route::get('/products/create', [ProductController::class, 'create'])->name('master.products.create');
+        Route::post('/products', [ProductController::class, 'store'])->name('master.products.store');
+        Route::get('/products/{product}/edit', [ProductController::class, 'edit'])->name('master.products.edit');
+        Route::put('/products/{product}', [ProductController::class, 'update'])->name('master.products.update');
+        Route::delete('/products/{product}', [ProductController::class, 'destroy'])->name('master.products.destroy');
+        Route::get('/products/{product}/add-stock', [ProductController::class, 'addStock'])->name('master.products.add-stock');
+        Route::post('/products/{product}/add-stock', [ProductController::class, 'storeStock'])->name('master.products.store-stock');
+        Route::get('/products/stock/{stock}/edit', [ProductController::class, 'editStock'])->name('master.products.edit-stock');
+        Route::put('/products/stock/{stock}', [ProductController::class, 'updateStock'])->name('master.products.update-stock');
+        Route::delete('/products/stock/{stock}', [ProductController::class, 'destroyStock'])->name('master.products.destroy-stock');
+    });
+
+    Route::prefix('report')->group(function () {
+        Route::get('/cash-flow', [ArusKasController::class, 'reportIndex'])->name('report.cash-flow');
+        Route::get('/cash-flow/export', [ArusKasController::class, 'exportExcel'])->name('report.cash-flow.export');
+        Route::get('/cash', [ArusKasController::class, 'reportCash'])->name('report.cash');
+        Route::get('/cash/export', [ArusKasController::class, 'exportCashExcel'])->name('report.cash.export');
+        Route::get('/api/cash', [ArusKasController::class, 'apiCashReport'])->name('api.report.cash');
+
+        Route::get('/income-statement', [IncomeStatementController::class, 'index'])->name('report.income-statement');
+        Route::get('/neraca', [NeracaController::class, 'index'])->name('report.neraca');
+        Route::get('/neraca/export', [NeracaController::class, 'exportExcel'])->name('report.neraca.export');
+
+        Route::get('/journal', [JurnalController::class, 'index'])->name('report.journal');
+        Route::post('/journal/sync', [JurnalController::class, 'sync'])->name('report.journal.sync');
+        Route::get('/journal/export', [JurnalController::class, 'exportExcel'])->name('report.journal.export');
+        Route::get('/ledger', [BukuBesarController::class, 'index'])->name('report.ledger');
+        Route::get('/ledger/export', [BukuBesarController::class, 'exportExcel'])->name('report.ledger.export');
+        Route::get('/trial-balance', [NeracaSaldoController::class, 'index'])->name('report.trial-balance');
+        Route::get('/trial-balance/export', [NeracaSaldoController::class, 'exportExcel'])->name('report.trial-balance.export');
+    });
+
+    Route::prefix('settings')->group(function () {
+        Route::get('/profile', [SettingsController::class, 'profile'])->name('settings.profile');
+        Route::post('/profile', [SettingsController::class, 'updateProfile'])->name('settings.profile.update');
+        Route::post('/password', [SettingsController::class, 'updatePassword'])->name('settings.password.update');
+    });
+});
