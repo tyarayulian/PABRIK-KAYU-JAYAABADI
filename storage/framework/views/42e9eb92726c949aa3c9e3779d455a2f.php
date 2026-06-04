@@ -3,7 +3,7 @@
 
 <?php $__env->startSection('styles'); ?>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<link rel="stylesheet" href="<?php echo e(asset('css/modal.css')); ?>?v=<?php echo e(time()); ?>">
 <style>
     * {
         font-family: 'Plus Jakarta Sans', sans-serif;
@@ -370,74 +370,62 @@
     }
 
     function deleteCategory(id) {
-        Swal.fire({
-            title: 'Hapus Kategori?',
-            text: "Kategori yang dihapus tidak dapat dikembalikan!",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#1e2a78',
-            cancelButtonColor: '#f1f5f9',
-            confirmButtonText: 'Ya, Hapus'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                fetch(`/master/categories/${id}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>',
-                        'Accept': 'application/json'
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        Swal.fire({ icon: 'success', title: 'Berhasil', text: data.message, showConfirmButton: false, timer: 1500 })
-                        .then(() => location.reload());
-                    } else {
-                        Swal.fire('Gagal!', data.message, 'error');
-                    }
-                });
-            }
+        const categoryElement = event.target.closest('tr').querySelector('td:nth-child(2)').textContent.trim();
+        Modal.delete(`kategori "${categoryElement}"`, function() {
+            fetch(`/master/categories/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert(data.message);
+                }
+            });
         });
     }
 
     function bulkDelete() {
         const selectedIds = Array.from(document.querySelectorAll('.category-checkbox:checked')).map(cb => cb.value);
-        Swal.fire({
-            title: `Hapus ${selectedIds.length} Kategori?`,
-            text: "Tindakan ini akan menghapus kategori terpilih secara permanen.",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#1e2a78',
-            cancelButtonColor: '#f1f5f9',
-            confirmButtonText: 'Ya, Hapus Semua'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                fetch('<?php echo e(route("master.categories.destroyBulk")); ?>', {
-                    method: 'DELETE',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({ ids: selectedIds })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        Swal.fire({ icon: 'success', title: 'Berhasil', text: data.message, showConfirmButton: false, timer: 1500 })
-                        .then(() => location.reload());
-                    } else {
-                        Swal.fire('Gagal!', data.message, 'error');
-                    }
-                });
-            }
+        Modal.delete(`${selectedIds.length} kategori terpilih`, function() {
+            fetch('<?php echo e(route("master.categories.destroyBulk")); ?>', {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ ids: selectedIds })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert(data.message);
+                }
+            });
         });
     }
 </script>
 
+<script src="<?php echo e(asset('js/modal.js')); ?>?v=<?php echo e(time()); ?>"></script>
+
 <?php if(session('success')): ?>
 <script>
-    Swal.fire({ icon: 'success', title: 'Berhasil', text: "<?php echo e(session('success')); ?>", timer: 2000, showConfirmButton: false, background: '#fff', color: '#1e2a78' });
+    // Show success notification
+    setTimeout(function() {
+        const notification = document.createElement('div');
+        notification.style.cssText = 'position:fixed;top:20px;right:20px;background:#16a34a;color:white;padding:16px 24px;border-radius:12px;z-index:10000;box-shadow:0 10px 30px rgba(0,0,0,0.2);font-weight:600;';
+        notification.textContent = '✓ <?php echo e(session("success")); ?>';
+        document.body.appendChild(notification);
+        setTimeout(() => notification.remove(), 3000);
+    }, 100);
 </script>
 <?php endif; ?>
 <?php $__env->stopSection(); ?>
