@@ -1198,7 +1198,7 @@
         </div>
 
         <!-- COLUMN HEADERS -->
-        <div id="columnHeadersRow" style="display: grid; grid-template-columns: 40px 100px 130px 120px 1fr 60px 120px 60px 100px; gap: 12px; align-items: center; padding: 16px 32px; background: #f8fafc; border-bottom: 2px solid #e2e8f0; font-weight: 700; font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">
+        <div id="columnHeadersRow" style="display: grid; grid-template-columns: 40px 100px 130px 120px 1fr 60px 140px 80px 100px; gap: 12px; align-items: center; padding: 16px 32px; background: #f8fafc; border-bottom: 2px solid #e2e8f0; font-weight: 700; font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">
             <div id="checkboxHeaderCol" style="display: none; text-align: center;">
                 <input type="checkbox" id="selectAllTransactions" onchange="selectAllTransactionCheckboxes()" style="cursor: pointer;">
             </div>
@@ -1216,7 +1216,7 @@
         <!-- TRANSACTION LIST -->
         <div style="padding: 0;">
             <?php $__empty_1 = true; $__currentLoopData = $allTransactions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $transaction): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
-                <div data-transaction-id="<?php echo e($transaction['id']); ?>" data-transaction-type="<?php echo e($transaction['type']); ?>" data-item-index="<?php echo e($index); ?>" data-amount="Rp<?php echo e(number_format($transaction['amount'], 0, ',', '.')); ?>" class="transaction-row" style="display: grid; grid-template-columns: 40px 100px 130px 120px 1fr 60px 120px 60px 100px; gap: 12px; align-items: start; padding: 18px 32px; border-bottom: 1px solid #f8fafc; transition: all 0.2s; background: white;" onmouseover="this.style.background='#fcfcfd'" onmouseout="this.style.background='white'">
+                <div data-transaction-id="<?php echo e($transaction['id']); ?>" data-transaction-type="<?php echo e($transaction['type']); ?>" data-item-index="<?php echo e($index); ?>" data-amount="Rp<?php echo e(number_format($transaction['amount'], 0, ',', '.')); ?>" class="transaction-row" style="display: grid; grid-template-columns: 40px 100px 130px 120px 1fr 60px 140px 80px 100px; gap: 12px; align-items: start; padding: 18px 32px; border-bottom: 1px solid #f8fafc; transition: all 0.2s; background: white;" onmouseover="this.style.background='#fcfcfd'" onmouseout="this.style.background='white'">
                     <!-- CHECKBOX COLUMN -->
                     <div id="checkboxCell-<?php echo e($transaction['id']); ?>" class="checkbox-col" style="display: none; text-align: center;">
                         <input type="checkbox" class="transaction-checkbox" value="<?php echo e($transaction['id']); ?>" onchange="toggleBulkDeleteBtnTransactions()" style="cursor: pointer;">

@@ -77,8 +77,21 @@ class DashboardController extends Controller
         $totalKasKeluarAll = KasKeluar::sum('amount') + SalesReturn::sum('amount');
         $runningBalance = $totalKasMasukAll - $totalKasKeluarAll;
 
-        $totalKasMasuk = KasMasuk::sum('amount');
-        $totalKasKeluar = KasKeluar::sum('amount') + SalesReturn::sum('amount');
+        // Total Penjualan (hanya transaksi produk/penjualan)
+        $totalKasMasuk = KasMasuk::where(function ($query) {
+            $query->whereNotNull('product_id')
+                ->orWhereHas('category', function ($q) {
+                    $q->where('transaction_type', 'penjualan');
+                });
+        })->sum('amount');
+        
+        // Total Pembelian (hanya transaksi produk/pembelian)
+        $totalKasKeluar = KasKeluar::where(function ($query) {
+            $query->whereNotNull('product_id')
+                ->orWhereHas('category', function ($q) {
+                    $q->where('transaction_type', 'pembelian');
+                });
+        })->sum('amount') + SalesReturn::sum('amount');
 
         $grandTotal = $totalKasMasuk + $totalKasKeluar;
         $cashInPercentageTotal = $grandTotal > 0 ? round(($totalKasMasuk / $grandTotal) * 100, 1) : 0;
@@ -196,8 +209,21 @@ class DashboardController extends Controller
         $totalKasKeluarAll = KasKeluar::sum('amount') + SalesReturn::sum('amount');
         $runningBalance = $totalKasMasukAll - $totalKasKeluarAll;
 
-        $totalKasMasuk = KasMasuk::sum('amount');
-        $totalKasKeluar = KasKeluar::sum('amount') + SalesReturn::sum('amount');
+        // Total Penjualan (hanya transaksi produk/penjualan)
+        $totalKasMasuk = KasMasuk::where(function ($query) {
+            $query->whereNotNull('product_id')
+                ->orWhereHas('category', function ($q) {
+                    $q->where('transaction_type', 'penjualan');
+                });
+        })->sum('amount');
+        
+        // Total Pembelian (hanya transaksi produk/pembelian)
+        $totalKasKeluar = KasKeluar::where(function ($query) {
+            $query->whereNotNull('product_id')
+                ->orWhereHas('category', function ($q) {
+                    $q->where('transaction_type', 'pembelian');
+                });
+        })->sum('amount') + SalesReturn::sum('amount');
 
         $grandTotal = $totalKasMasuk + $totalKasKeluar;
         $cashInPercentageTotal = $grandTotal > 0 ? round(($totalKasMasuk / $grandTotal) * 100, 1) : 0;
