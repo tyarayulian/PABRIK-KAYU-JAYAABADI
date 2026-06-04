@@ -1,12 +1,10 @@
-@extends('layouts.app')
+<?php $__env->startSection('title', 'Transaksi'); ?>
+<?php $__env->startSection('breadcrumb', 'Transaksi'); ?>
 
-@section('title', 'Transaksi')
-@section('breadcrumb', 'Transaksi')
-
-@section('styles')
+<?php $__env->startSection('styles'); ?>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pdfobject/2.2.8/pdfobject.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<link rel="stylesheet" href="{{ asset('css/modal.css') }}?v={{ time() }}">
+<link rel="stylesheet" href="<?php echo e(asset('css/modal.css')); ?>?v=<?php echo e(time()); ?>">
 <style>
     * {
         font-family: 'Plus Jakarta Sans', sans-serif;
@@ -1098,9 +1096,9 @@
         color: #94a3b8;
     }
 </style>
-@endsection
+<?php $__env->stopSection(); ?>
 
-@section('content')
+<?php $__env->startSection('content'); ?>
 <div style="padding: 0 20px 40px 20px;">
     <!-- STAT CARDS -->
     <div class="stat-cards-grid" style="margin-top: 30px;">
@@ -1110,8 +1108,8 @@
             </div>
             <div class="stat-info">
                 <div class="stat-card-label">Total Penjualan</div>
-                <div class="stat-card-value" id="statIncomeValue">Rp{{ number_format($cashIns->sum('amount'), 0, ',', '.') }}</div>
-                <div class="stat-card-meta" id="statIncomeCount">{{ $cashIns->count() }} transaksi</div>
+                <div class="stat-card-value" id="statIncomeValue">Rp<?php echo e(number_format($cashIns->sum('amount'), 0, ',', '.')); ?></div>
+                <div class="stat-card-meta" id="statIncomeCount"><?php echo e($cashIns->count()); ?> transaksi</div>
             </div>
         </div>
         <div class="stat-card">
@@ -1120,8 +1118,8 @@
             </div>
             <div class="stat-info">
                 <div class="stat-card-label">Total Pembelian</div>
-                <div class="stat-card-value" id="statExpenseValue">Rp{{ number_format($cashOuts->sum('amount'), 0, ',', '.') }}</div>
-                <div class="stat-card-meta" id="statExpenseCount">{{ $cashOuts->count() }} transaksi</div>
+                <div class="stat-card-value" id="statExpenseValue">Rp<?php echo e(number_format($cashOuts->sum('amount'), 0, ',', '.')); ?></div>
+                <div class="stat-card-meta" id="statExpenseCount"><?php echo e($cashOuts->count()); ?> transaksi</div>
             </div>
         </div>
         <div class="stat-card">
@@ -1130,7 +1128,7 @@
             </div>
             <div class="stat-info">
                 <div class="stat-card-label">Saldo Bersih</div>
-                <div class="stat-card-value" id="statNetValue">Rp{{ number_format($cashIns->sum('amount') - $cashOuts->sum('amount'), 0, ',', '.') }}</div>
+                <div class="stat-card-value" id="statNetValue">Rp<?php echo e(number_format($cashIns->sum('amount') - $cashOuts->sum('amount'), 0, ',', '.')); ?></div>
                 <div class="stat-card-meta">Penjualan - Pembelian</div>
             </div>
         </div>
@@ -1142,13 +1140,13 @@
         <div class="table-title-section">
             <div>
                 <h2>Daftar Transaksi</h2>
-                <p id="totalTransactionsCount">Menampilkan total <strong>{{ $allTransactions->count() }}</strong> transaksi</p>
+                <p id="totalTransactionsCount">Menampilkan total <strong><?php echo e($allTransactions->count()); ?></strong> transaksi</p>
             </div>
             <div style="display: flex; gap: 12px; align-items: center;">
-                <a href="{{ route('kas-masuk.create') }}" class="btn-action btn-action-primary">
+                <a href="<?php echo e(route('kas-masuk.create')); ?>" class="btn-action btn-action-primary">
                     <i class="fas fa-plus"></i> Penjualan
                 </a>
-                <a href="{{ route('kas-keluar.create') }}" class="btn-action btn-action-primary">
+                <a href="<?php echo e(route('kas-keluar.create')); ?>" class="btn-action btn-action-primary">
                     <i class="fas fa-plus"></i> Pembelian
                 </a>
                 <button class="btn-outline" id="selectModeBtn" onclick="toggleSelectMode()">
@@ -1167,19 +1165,19 @@
         <div id="filterPanel" class="filter-row">
             <div class="filter-group">
                 <label>MULAI</label>
-                <input type="date" id="filterStartDate" value="{{ request('start_date') }}">
+                <input type="date" id="filterStartDate" value="<?php echo e(request('start_date')); ?>">
             </div>
 
             <div class="filter-group">
                 <label>AKHIR</label>
-                <input type="date" id="filterEndDate" value="{{ request('end_date') }}">
+                <input type="date" id="filterEndDate" value="<?php echo e(request('end_date')); ?>">
             </div>
 
             <div class="filter-actions">
                 <button class="btn-filter" onclick="applyDateFilter()">
                     <i class="fas fa-filter"></i> Terapkan
                 </button>
-                <a href="{{ route('transaksi.index') }}" class="btn-reset-filter">
+                <a href="<?php echo e(route('transaksi.index')); ?>" class="btn-reset-filter">
                     Reset
                 </a>
             </div>
@@ -1200,7 +1198,7 @@
         </div>
 
         <!-- COLUMN HEADERS -->
-        <div id="columnHeadersRow" style="display: grid; grid-template-columns: 40px 100px 130px 120px 1fr 60px 140px 80px 100px; gap: 12px; align-items: center; padding: 16px 32px; background: #f8fafc; border-bottom: 2px solid #e2e8f0; font-weight: 700; font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">
+        <div id="columnHeadersRow" style="display: grid; grid-template-columns: 40px 100px 130px 120px 1fr 60px 120px 60px 100px; gap: 12px; align-items: center; padding: 16px 32px; background: #f8fafc; border-bottom: 2px solid #e2e8f0; font-weight: 700; font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">
             <div id="checkboxHeaderCol" style="display: none; text-align: center;">
                 <input type="checkbox" id="selectAllTransactions" onchange="selectAllTransactionCheckboxes()" style="cursor: pointer;">
             </div>
@@ -1217,87 +1215,98 @@
 
         <!-- TRANSACTION LIST -->
         <div style="padding: 0;">
-            @forelse($allTransactions as $index => $transaction)
-                <div data-transaction-id="{{ $transaction['id'] }}" data-transaction-type="{{ $transaction['type'] }}" data-item-index="{{ $index }}" data-amount="Rp{{ number_format($transaction['amount'], 0, ',', '.') }}" class="transaction-row" style="display: grid; grid-template-columns: 40px 100px 130px 120px 1fr 60px 140px 80px 100px; gap: 12px; align-items: start; padding: 18px 32px; border-bottom: 1px solid #f8fafc; transition: all 0.2s; background: white;" onmouseover="this.style.background='#fcfcfd'" onmouseout="this.style.background='white'">
+            <?php $__empty_1 = true; $__currentLoopData = $allTransactions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $transaction): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                <div data-transaction-id="<?php echo e($transaction['id']); ?>" data-transaction-type="<?php echo e($transaction['type']); ?>" data-item-index="<?php echo e($index); ?>" data-amount="Rp<?php echo e(number_format($transaction['amount'], 0, ',', '.')); ?>" class="transaction-row" style="display: grid; grid-template-columns: 40px 100px 130px 120px 1fr 60px 120px 60px 100px; gap: 12px; align-items: start; padding: 18px 32px; border-bottom: 1px solid #f8fafc; transition: all 0.2s; background: white;" onmouseover="this.style.background='#fcfcfd'" onmouseout="this.style.background='white'">
                     <!-- CHECKBOX COLUMN -->
-                    <div id="checkboxCell-{{ $transaction['id'] }}" class="checkbox-col" style="display: none; text-align: center;">
-                        <input type="checkbox" class="transaction-checkbox" value="{{ $transaction['id'] }}" onchange="toggleBulkDeleteBtnTransactions()" style="cursor: pointer;">
+                    <div id="checkboxCell-<?php echo e($transaction['id']); ?>" class="checkbox-col" style="display: none; text-align: center;">
+                        <input type="checkbox" class="transaction-checkbox" value="<?php echo e($transaction['id']); ?>" onchange="toggleBulkDeleteBtnTransactions()" style="cursor: pointer;">
                     </div>
 
                     <!-- NO COLUMN -->
                     <div class="transaction-number" style="text-align: center; font-size: 13px; color: #94a3b8; font-weight: 500;">
-                        {{ $loop->iteration }}
+                        <?php echo e($loop->iteration); ?>
+
                     </div>
 
                     <!-- DATE COLUMN -->
                     <div style="text-align: left;">
                         <div style="font-size: 14px; color: #1e293b; font-weight: 600;">
-                            {{ $transaction['date']->locale('id')->translatedFormat('d M Y') }}
+                            <?php echo e($transaction['date']->locale('id')->translatedFormat('d M Y')); ?>
+
                         </div>
-                        <div style="font-size: 12px; color: #94a3b8; margin-top: 2px;">{{ $transaction['date']->format('H:i') }}</div>
+                        <div style="font-size: 12px; color: #94a3b8; margin-top: 2px;"><?php echo e($transaction['date']->format('H:i')); ?></div>
                     </div>
 
                     <!-- CATEGORY BADGE -->
                     <div style="text-align: left;">
                         <div style="display: flex; flex-direction: column; gap: 4px;">
                             <span class="badge">
-                                @if(isset($transaction['product']) && $transaction['product'])
-                                    @if($transaction['type'] === 'expense')
-                                        Kayu {{ $transaction['product']->wood_type }}
-                                    @else
-                                        {{ $transaction['product']->name }}
-                                    @endif
-                                @else
-                                    {{ $transaction['category']->name ?? ($transaction['account']->name ?? 'N/A') }}
-                                @endif
+                                <?php if(isset($transaction['product']) && $transaction['product']): ?>
+                                    <?php if($transaction['type'] === 'expense'): ?>
+                                        Kayu <?php echo e($transaction['product']->wood_type); ?>
+
+                                    <?php else: ?>
+                                        <?php echo e($transaction['product']->name); ?>
+
+                                    <?php endif; ?>
+                                <?php else: ?>
+                                    <?php echo e($transaction['category']->name ?? ($transaction['account']->name ?? 'N/A')); ?>
+
+                                <?php endif; ?>
                             </span>
-                            @if(isset($transaction['account']) && $transaction['account'])
+                            <?php if(isset($transaction['account']) && $transaction['account']): ?>
                                 <span style="font-size: 11px; color: #a0aec0; font-weight: 500;">
-                                    {{ $transaction['account']->name }}
+                                    <?php echo e($transaction['account']->name); ?>
+
                                 </span>
-                            @endif
+                            <?php endif; ?>
                         </div>
                     </div>
 
                     <!-- ASAL KAYU -->
                     <div style="text-align: left;">
                         <span style="font-size: 14px; color: #475569; font-weight: 500;">
-                            {{ $transaction['hutan'] ?? '-' }}
+                            <?php echo e($transaction['hutan'] ?? '-'); ?>
+
                         </span>
                     </div>
 
                     <!-- DESCRIPTION -->
                     <div style="text-align: left; width: 100%; overflow: hidden;">
-                        <div style="font-size: 14px; color: #475569; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;" title="{{ $transaction['description'] ?? '-' }}">
-                            {{ $transaction['description'] ?? '-' }}
+                        <div style="font-size: 14px; color: #475569; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;" title="<?php echo e($transaction['description'] ?? '-'); ?>">
+                            <?php echo e($transaction['description'] ?? '-'); ?>
+
                         </div>
                     </div>
 
                     <!-- QUANTITY -->
                     <div style="text-align: center;">
                         <span style="font-size: 14px; color: #475569; font-weight: 600;">
-                            {{ (isset($transaction['product']) && $transaction['product']) ? ($transaction['quantity'] != 0 ? (int)$transaction['quantity'] : '-') : '-' }}
+                            <?php echo e((isset($transaction['product']) && $transaction['product']) ? ($transaction['quantity'] != 0 ? (int)$transaction['quantity'] : '-') : '-'); ?>
+
                         </span>
                     </div>
 
                     <!-- AMOUNT -->
                     <div style="text-align: left;">
-                        @if($transaction['type'] === 'income')
+                        <?php if($transaction['type'] === 'income'): ?>
                             <div class="amount-positive">
-                                +Rp{{ number_format($transaction['amount'], 0, ',', '.') }}
+                                +Rp<?php echo e(number_format($transaction['amount'], 0, ',', '.')); ?>
+
                             </div>
-                        @else
+                        <?php else: ?>
                             <div class="amount-negative">
-                                -Rp{{ number_format($transaction['amount'], 0, ',', '.') }}
+                                -Rp<?php echo e(number_format($transaction['amount'], 0, ',', '.')); ?>
+
                             </div>
-                        @endif
+                        <?php endif; ?>
                     </div>
 
                     <!-- FILE -->
                     <div style="text-align: left;">
-                        @if($transaction['file_path'])
+                        <?php if($transaction['file_path']): ?>
                             <div style="position: relative; display: inline-block;">
-                                @php
+                                <?php
                                     $fileExt = strtolower(pathinfo($transaction['file_path'], PATHINFO_EXTENSION));
                                     $isImage = in_array($fileExt, ['jpg', 'jpeg', 'png', 'gif', 'webp']);
                                     $isPdf = $fileExt === 'pdf';
@@ -1308,47 +1317,47 @@
                                     
                                     // Replace KasMasuk/KasKeluar with Penjualan/Pembelian for display
                                     $displayFileName = str_replace(['KasMasuk_', 'KasKeluar_'], [$prefix . '_', $prefix . '_'], $actualFileName);
-                                @endphp
-                                @if($isImage)
-                                    <img src="{{ $fileUrl }}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" style="width: 36px; height: 36px; border-radius: 8px; object-fit: cover; cursor: pointer; border: 1px solid #e2e8f0; box-shadow: 0 1px 2px rgba(0,0,0,0.05);" onclick="openImageViewer('{{ $fileUrl }}', '{{ $displayFileName }}')" title="Klik untuk lihat gambar">
+                                ?>
+                                <?php if($isImage): ?>
+                                    <img src="<?php echo e($fileUrl); ?>" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" style="width: 36px; height: 36px; border-radius: 8px; object-fit: cover; cursor: pointer; border: 1px solid #e2e8f0; box-shadow: 0 1px 2px rgba(0,0,0,0.05);" onclick="openImageViewer('<?php echo e($fileUrl); ?>', '<?php echo e($displayFileName); ?>')" title="Klik untuk lihat gambar">
                                     <div style="width: 36px; height: 36px; border-radius: 8px; background: #f1f5f9; border: 1px solid #e2e8f0; display: none; align-items: center; justify-content: center; cursor: pointer; font-size: 11px; color: #64748b; font-weight: 600;" onclick="this.previousElementSibling.style.display=''; this.style.display='none';" title="File tidak dapat dimuat">
                                         <i class="fas fa-exclamation" style="color: #ef4444; font-size: 14px;"></i>
                                     </div>
-                                @elseif($isPdf)
-                                    <div style="width: 36px; height: 36px; border-radius: 8px; background: #fff1f2; border: 1px solid #ffe4e6; display: flex; align-items: center; justify-content: center; cursor: pointer;" onclick="openPdfViewer('{{ $fileUrl }}', '{{ $displayFileName }}')" title="Klik untuk lihat PDF">
+                                <?php elseif($isPdf): ?>
+                                    <div style="width: 36px; height: 36px; border-radius: 8px; background: #fff1f2; border: 1px solid #ffe4e6; display: flex; align-items: center; justify-content: center; cursor: pointer;" onclick="openPdfViewer('<?php echo e($fileUrl); ?>', '<?php echo e($displayFileName); ?>')" title="Klik untuk lihat PDF">
                                         <span style="color: #e11d48; font-size: 10px; font-weight: 800; letter-spacing: 0.05em;">PDF</span>
                                     </div>
-                                @else
-                                    <div style="width: 36px; height: 36px; border-radius: 8px; background: #f1f5f9; border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: center; cursor: pointer;" onclick="window.open('{{ $fileUrl }}', '_blank')" title="Klik untuk download">
+                                <?php else: ?>
+                                    <div style="width: 36px; height: 36px; border-radius: 8px; background: #f1f5f9; border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: center; cursor: pointer;" onclick="window.open('<?php echo e($fileUrl); ?>', '_blank')" title="Klik untuk download">
                                         <i class="fas fa-file" style="color: #64748b; font-size: 14px;"></i>
                                     </div>
-                                @endif
+                                <?php endif; ?>
                             </div>
-                        @else
+                        <?php else: ?>
                             <span style="font-size: 13px; color: #d1d5db;">-</span>
-                        @endif
+                        <?php endif; ?>
                     </div>
 
                     <!-- ACTIONS -->
                     <div style="text-align: left; display: flex; gap: 8px; align-items: center;">
-                        <button style="background: #f1f5f9; color: #1e293b; border: 1px solid #e2e8f0; padding: 0; width: 34px; height: 34px; border-radius: 10px; font-size: 14px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center;" title="Lihat" onclick="showTransactionDetail({{ $transaction['id'] }}, '{{ $transaction['type'] }}')" onmouseover="this.style.background='#e2e8f0'; this.style.borderColor='#cbd5e1'" onmouseout="this.style.background='#f1f5f9'; this.style.borderColor='#e2e8f0'"><i class="fas fa-eye"></i></button>
+                        <button style="background: #f1f5f9; color: #1e293b; border: 1px solid #e2e8f0; padding: 0; width: 34px; height: 34px; border-radius: 10px; font-size: 14px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center;" title="Lihat" onclick="showTransactionDetail(<?php echo e($transaction['id']); ?>, '<?php echo e($transaction['type']); ?>')" onmouseover="this.style.background='#e2e8f0'; this.style.borderColor='#cbd5e1'" onmouseout="this.style.background='#f1f5f9'; this.style.borderColor='#e2e8f0'"><i class="fas fa-eye"></i></button>
                         
-                        @php
+                        <?php
                             $editUrl = $transaction['type'] === 'income' 
                                 ? route('kas-masuk.edit', $transaction['id']) 
                                 : route('kas-keluar.edit', $transaction['id']);
-                        @endphp
-                        <a href="{{ $editUrl }}" style="background: #f8fafc; color: #1e2a78; border: 1px solid #e2e8f0; padding: 0; width: 34px; height: 34px; border-radius: 10px; font-size: 14px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; text-decoration: none;" title="Edit" onmouseover="this.style.background='#f1f5f9'; this.style.borderColor='#1e2a78'" onmouseout="this.style.background='#f8fafc'; this.style.borderColor='#e2e8f0'"><i class="fas fa-edit"></i></a>
+                        ?>
+                        <a href="<?php echo e($editUrl); ?>" style="background: #f8fafc; color: #1e2a78; border: 1px solid #e2e8f0; padding: 0; width: 34px; height: 34px; border-radius: 10px; font-size: 14px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; text-decoration: none;" title="Edit" onmouseover="this.style.background='#f1f5f9'; this.style.borderColor='#1e2a78'" onmouseout="this.style.background='#f8fafc'; this.style.borderColor='#e2e8f0'"><i class="fas fa-edit"></i></a>
                         
-                        <button style="background: #fff1f2; color: #f43f5e; border: 1px solid #ffe4e6; padding: 0; width: 34px; height: 34px; border-radius: 10px; font-size: 14px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center;" title="Hapus" onclick="deleteTransaction({{ $transaction['id'] }}, '{{ $transaction['type'] }}')" onmouseover="this.style.background='#ffe4e6'; this.style.borderColor='#fecdd3'" onmouseout="this.style.background='#fff1f2'; this.style.borderColor='#ffe4e6'"><i class="fas fa-trash"></i></button>
+                        <button style="background: #fff1f2; color: #f43f5e; border: 1px solid #ffe4e6; padding: 0; width: 34px; height: 34px; border-radius: 10px; font-size: 14px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center;" title="Hapus" onclick="deleteTransaction(<?php echo e($transaction['id']); ?>, '<?php echo e($transaction['type']); ?>')" onmouseover="this.style.background='#ffe4e6'; this.style.borderColor='#fecdd3'" onmouseout="this.style.background='#fff1f2'; this.style.borderColor='#ffe4e6'"><i class="fas fa-trash"></i></button>
                     </div>
                 </div>
-            @empty
+            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                 <div class="empty-state">
                     <i class="fas fa-folder-open"></i>
                     <p>Belum ada data transaksi yang ditemukan</p>
                 </div>
-            @endforelse
+            <?php endif; ?>
         </div>
 
         <!-- PAGINATION CONTAINER -->
@@ -1409,9 +1418,9 @@
     </div>
 </div>
 
-@include('components.file-viewer')
+<?php echo $__env->make('components.file-viewer', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
-<script src="{{ asset('js/modal.js') }}?v={{ time() }}"></script>
+<script src="<?php echo e(asset('js/modal.js')); ?>?v=<?php echo e(time()); ?>"></script>
 <script>
     const ITEMS_PER_PAGE = 10;
     let currentPage = 1;
@@ -1599,8 +1608,8 @@
     function deleteTransaction(id, type) {
         Modal.delete('transaksi ini', function() {
             const endpoint = type === 'income' 
-                ? `{{ route("kas-masuk.destroy", ":id", false) }}`.replace(':id', id)
-                : `{{ route("kas-keluar.destroy", ":id", false) }}`.replace(':id', id);
+                ? `<?php echo e(route("kas-masuk.destroy", ":id", false)); ?>`.replace(':id', id)
+                : `<?php echo e(route("kas-keluar.destroy", ":id", false)); ?>`.replace(':id', id);
 
             fetch(endpoint, {
                 method: 'DELETE',
@@ -1968,7 +1977,7 @@
     let currentTransactionDetail = null;
 
     function showTransactionDetail(id, type) {
-        const endpoint = `{{ route("api.cash.detail", ["type" => ":type", "id" => ":id"], false) }}`
+        const endpoint = `<?php echo e(route("api.cash.detail", ["type" => ":type", "id" => ":id"], false)); ?>`
             .replace(':type', type)
             .replace(':id', id);
             
@@ -2155,12 +2164,12 @@
             
             const form = document.createElement('form');
             form.method = 'POST';
-            form.action = '{{ route('cash.destroyBulk', [], false) }}';
+            form.action = '<?php echo e(route('cash.destroyBulk', [], false)); ?>';
             
             const csrfInput = document.createElement('input');
             csrfInput.type = 'hidden';
             csrfInput.name = '_token';
-            csrfInput.value = '{{ csrf_token() }}';
+            csrfInput.value = '<?php echo e(csrf_token()); ?>';
             form.appendChild(csrfInput);
             
             const methodInput = document.createElement('input');
@@ -2182,9 +2191,11 @@
         });
     }
 </script>
-@endsection
+<?php $__env->stopSection(); ?>
 
-@section('scripts')
+<?php $__env->startSection('scripts'); ?>
 <script>
 </script>
-@endsection
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH D:\xampp_new\htdocs\tyara\resources\views/transaksi/index.blade.php ENDPATH**/ ?>
