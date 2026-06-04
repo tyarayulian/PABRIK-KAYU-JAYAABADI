@@ -8,26 +8,53 @@ use App\Http\Controllers\Laporan\JurnalController;
 use App\Http\Controllers\Laporan\NeracaController;
 use App\Http\Controllers\Laporan\NeracaSaldoController;
 use App\Http\Controllers\Login\AuthController;
+use App\Http\Controllers\Auth\ForgotPasswordController;
+use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\Master\ChartOfAccountController;
 use App\Http\Controllers\Master\KategoriController;
 use App\Http\Controllers\Master\ProductController;
 use App\Http\Controllers\Pengaturan\SettingsController;
+use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\Transaksi\CashTransactionController;
 use App\Http\Controllers\Transaksi\KasKeluarController;
 use App\Http\Controllers\Transaksi\KasMasukController;
 use App\Http\Controllers\Transaksi\SalesReturnController;
 use App\Http\Controllers\Transaksi\TransaksiController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
 
 Route::get('/', function () {
     return view('landing');
 });
 
-Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-Route::post('/login', [AuthController::class, 'login'])->name('login.submit');
-Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
-Route::post('/register', [AuthController::class, 'register'])->name('register.submit');
-Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+// Debug route - remove in production
+Route::get('/debug-auth', function () {
+    return [
+        'authenticated' => Auth::check(),
+        'user' => Auth::user(),
+        'session' => session()->all()
+    ];
+});
+
+Route::middleware('guest')->group(function () {
+    Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+    Route::post('/login', [AuthController::class, 'login'])->name('login.submit');
+    
+    // Registration - disable in production, only for initial setup
+    // Comment out these lines to disable public registration:
+    // Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
+    // Route::post('/register', [AuthController::class, 'register'])->name('register.submit');
+    
+    // Forgot Password Routes
+    Route::get('/forgot-password', [ForgotPasswordController::class, 'showLinkRequestForm'])->name('password.request');
+    Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail'])->name('password.email');
+    
+    // Reset Password Routes
+    Route::get('/reset-password/{token}', [ResetPasswordController::class, 'showResetForm'])->name('password.reset');
+    Route::post('/reset-password', [ResetPasswordController::class, 'reset'])->name('password.update');
+});
+
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
 
 Route::middleware('auth')->group(function () {
     Route::get('/storage/{path}', function ($path) {
@@ -126,5 +153,11 @@ Route::middleware('auth')->group(function () {
         Route::get('/profile', [SettingsController::class, 'profile'])->name('settings.profile');
         Route::post('/profile', [SettingsController::class, 'updateProfile'])->name('settings.profile.update');
         Route::post('/password', [SettingsController::class, 'updatePassword'])->name('settings.password.update');
+        
+        // User Management (Admin only)
+        Route::get('/users', [UserManagementController::class, 'index'])->name('admin.users.index');
+        Route::get('/users/create', [UserManagementController::class, 'create'])->name('admin.users.create');
+        Route::post('/users', [UserManagementController::class, 'store'])->name('admin.users.store');
+        Route::delete('/users/{user}', [UserManagementController::class, 'destroy'])->name('admin.users.destroy');
     });
 });

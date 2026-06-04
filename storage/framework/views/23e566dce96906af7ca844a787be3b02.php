@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/png" href="{{ asset('storage/images/logo 2.png') }}">
+    <link rel="icon" type="image/png" href="<?php echo e(asset('storage/images/logo 2.png')); ?>">
     <title>Jaya Cash - Smart ERP for Wood Industries</title>
     
     <!-- Fonts -->
@@ -187,7 +187,7 @@
         }
         .cta-content::before {
             content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: url('{{ asset("storage/images/landing foto.jpeg") }}') center/cover;
+            background: url('<?php echo e(asset("storage/images/landing foto.jpeg")); ?>') center/cover;
             opacity: 0.1; mix-blend-mode: overlay;
         }
         .cta h2 { font-size: clamp(32px, 4vw, 48px); font-weight: 800; margin-bottom: 24px; letter-spacing: -2px; }
@@ -222,17 +222,17 @@
     <nav id="navbar">
         <div class="container nav-content">
             <a href="/" class="logo">
-                <img src="{{ asset('storage/images/logo 2.png') }}" alt="Jaya Cash">
+                <img src="<?php echo e(asset('storage/images/logo 2.png')); ?>" alt="Jaya Cash">
                 <span class="logo-text">Jaya Cash</span>
             </a>
             <div class="nav-links">
                 <a href="#fitur">Fitur</a>
                 <a href="#alur">Alur Kerja</a>
-                @auth
+                <?php if(auth()->guard()->check()): ?>
                     <a href="/dashboard" class="btn-login">Akses Dashboard</a>
-                @else
+                <?php else: ?>
                     <a href="/login" class="btn-login">Mulai Sekarang</a>
-                @endauth
+                <?php endif; ?>
             </div>
         </div>
     </nav>
@@ -245,17 +245,17 @@
                     <h1>Kuasai Keuangan <span>Pabrik Anda</span> dengan Cerdas</h1>
                     <p>Sistem ERP minimalis yang dirancang khusus untuk industri kayu. Kelola arus kas, inventory, dan laporan keuangan dalam satu platform yang intuitif.</p>
                     <div class="hero-actions">
-                        @auth
+                        <?php if(auth()->guard()->check()): ?>
                             <a href="/dashboard" class="btn-primary">Akses Dashboard</a>
-                        @else
+                        <?php else: ?>
                             <a href="/login" class="btn-primary">Mulai Sekarang</a>
-                        @endauth
+                        <?php endif; ?>
                         <a href="#fitur" class="btn-outline">Pelajari Fitur</a>
                     </div>
                 </div>
                 <div class="animate-fade-in" style="animation-delay: 0.3s">
                     <div class="hero-mockup">
-                        <img src="{{ asset('storage/images/landing foto.jpeg') }}" alt="Dashboard Preview">
+                        <img src="<?php echo e(asset('storage/images/landing foto.jpeg')); ?>" alt="Dashboard Preview">
                     </div>
                 </div>
             </div>
@@ -324,11 +324,11 @@
             <div class="cta-content reveal">
                 <h2>Siap Melakukan Transformasi Digital?</h2>
                 <p>Bergabunglah dengan ekosistem Jaya Cash dan tingkatkan efisiensi pengelolaan keuangan pabrik Anda hari ini.</p>
-                @auth
+                <?php if(auth()->guard()->check()): ?>
                     <a href="/dashboard" class="btn-primary" style="background: var(--white); color: var(--primary)">Akses Dashboard</a>
-                @else
+                <?php else: ?>
                     <a href="/login" class="btn-primary" style="background: var(--white); color: var(--primary)">Mulai Sekarang</a>
-                @endauth
+                <?php endif; ?>
             </div>
         </div>
     </section>
@@ -338,7 +338,7 @@
             <div class="footer-grid">
                 <div class="footer-info">
                     <a href="/" class="logo">
-                        <img src="{{ asset('storage/images/logo 2.png') }}" alt="Jaya Cash">
+                        <img src="<?php echo e(asset('storage/images/logo 2.png')); ?>" alt="Jaya Cash">
                         <span class="logo-text">Jaya Cash</span>
                     </a>
                     <p>Solusi ERP modern yang berfokus pada transparansi dan akuntabilitas keuangan untuk industri pengolahan kayu.</p>
@@ -361,7 +361,7 @@
                 </div>
             </div>
             <div class="footer-bottom">
-                <p>&copy; {{ date('Y') }} Jaya Cash. Seluruh hak cipta dilindungi.</p>
+                <p>&copy; <?php echo e(date('Y')); ?> Jaya Cash. Seluruh hak cipta dilindungi.</p>
                 <p>Powered by PK Jaya Abadi</p>
             </div>
         </div>
@@ -403,4 +403,4 @@
         });
     </script>
 </body>
-</html>
+</html><?php /**PATH D:\xampp_new\htdocs\tyara\resources\views/landing.blade.php ENDPATH**/ ?>

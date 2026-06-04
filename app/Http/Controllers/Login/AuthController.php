@@ -17,15 +17,20 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
-        if (Auth::attempt($request->only('email', 'password'))) {
+        $credentials = $request->validate([
+            'email' => 'required|email',
+            'password' => 'required'
+        ]);
+
+        if (Auth::attempt($credentials, $request->filled('remember'))) {
             $request->session()->regenerate();
 
-            return redirect('/dashboard');
+            return redirect()->intended('/dashboard');
         }
 
         return back()->withErrors([
-            'email' => 'Login gagal',
-        ]);
+            'email' => 'Email atau password salah',
+        ])->withInput($request->only('email'));
     }
 
     public function showRegister()
@@ -60,6 +65,6 @@ class AuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect('/login');
+        return redirect('/')->with('success', 'Berhasil logout');
     }
 }

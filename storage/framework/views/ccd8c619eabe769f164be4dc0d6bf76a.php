@@ -203,14 +203,14 @@
 <aside class="sidebar">
     <div class="sidebar-header">
         <div class="sidebar-logo">
-            <img src="{{ asset('storage/images/logo 2.png') }}" alt="Jaya Cash" class="logo-img">
+            <img src="<?php echo e(asset('storage/images/logo 2.png')); ?>" alt="Jaya Cash" class="logo-img">
         </div>
     </div>
 
     <div class="sidebar-menu-container">
         <ul class="sidebar-menu">
             <li>
-                <a href="{{ route('dashboard') }}" class="{{ request()->routeIs('dashboard') ? 'active' : '' }}">
+                <a href="<?php echo e(route('dashboard')); ?>" class="<?php echo e(request()->routeIs('dashboard') ? 'active' : ''); ?>">
                     <i class="fas fa-home"></i>
                     <span>Dashboard</span>
                 </a>
@@ -220,13 +220,13 @@
         <div class="menu-section-label">Penjualan & Pembelian</div>
         <ul class="sidebar-menu">
             <li>
-                <a href="{{ route('transaksi.index') }}" class="{{ request()->routeIs('transaksi.*') ? 'active' : '' }}">
+                <a href="<?php echo e(route('transaksi.index')); ?>" class="<?php echo e(request()->routeIs('transaksi.*') ? 'active' : ''); ?>">
                     <i class="fas fa-shopping-cart"></i>
                     <span>Transaksi Produk</span>
                 </a>
             </li>
             <li>
-                <a href="{{ route('sales-return.index') }}" class="{{ request()->routeIs('sales-return.*') ? 'active' : '' }}">
+                <a href="<?php echo e(route('sales-return.index')); ?>" class="<?php echo e(request()->routeIs('sales-return.*') ? 'active' : ''); ?>">
                     <i class="fas fa-undo"></i>
                     <span>Retur Penjualan</span>
                 </a>
@@ -236,7 +236,7 @@
         <div class="menu-section-label">Pemasukan & Pengeluaran</div>
         <ul class="sidebar-menu">
             <li>
-                <a href="{{ route('cash.index') }}" class="{{ request()->routeIs('cash.index') ? 'active' : '' }}">
+                <a href="<?php echo e(route('cash.index')); ?>" class="<?php echo e(request()->routeIs('cash.index') ? 'active' : ''); ?>">
                     <i class="fas fa-dollar-sign"></i>
                     <span>Transaksi Kas</span>
                 </a>
@@ -246,19 +246,19 @@
         <div class="menu-section-label">Master Data</div>
         <ul class="sidebar-menu">
             <li>
-                <a href="{{ route('master.categories') }}" class="{{ request()->routeIs('master.categories') ? 'active' : '' }}">
+                <a href="<?php echo e(route('master.categories')); ?>" class="<?php echo e(request()->routeIs('master.categories') ? 'active' : ''); ?>">
                     <i class="fas fa-tag"></i>
                     <span>Kategori</span>
                 </a>
             </li>
             <li>
-                <a href="{{ route('master.accounts') }}" class="{{ request()->routeIs('master.accounts') ? 'active' : '' }}">
+                <a href="<?php echo e(route('master.accounts')); ?>" class="<?php echo e(request()->routeIs('master.accounts') ? 'active' : ''); ?>">
                     <i class="fas fa-layer-group"></i>
                     <span>Akun (COA)</span>
                 </a>
             </li>
             <li>
-                <a href="{{ route('master.products.index') }}" class="{{ request()->routeIs('master.products.index') || (request()->routeIs('master.products.*') && !request()->routeIs('master.products.menu')) ? 'active' : '' }}">
+                <a href="<?php echo e(route('master.products.index')); ?>" class="<?php echo e(request()->routeIs('master.products.index') || (request()->routeIs('master.products.*') && !request()->routeIs('master.products.menu')) ? 'active' : ''); ?>">
                     <i class="fas fa-box"></i>
                     <span>Stok Produk</span>
                 </a>
@@ -268,25 +268,25 @@
         <div class="menu-section-label">Laporan</div>
         <ul class="sidebar-menu">
             <li>
-                <a href="{{ route('report.journal') }}" class="{{ request()->routeIs('report.journal') ? 'active' : '' }}">
+                <a href="<?php echo e(route('report.journal')); ?>" class="<?php echo e(request()->routeIs('report.journal') ? 'active' : ''); ?>">
                     <i class="fas fa-book"></i>
                     <span>Jurnal Umum</span>
                 </a>
             </li>
             <li>
-                <a href="{{ route('report.ledger') }}" class="{{ request()->routeIs('report.ledger') ? 'active' : '' }}">
+                <a href="<?php echo e(route('report.ledger')); ?>" class="<?php echo e(request()->routeIs('report.ledger') ? 'active' : ''); ?>">
                     <i class="fas fa-book-open"></i>
                     <span>Buku Besar</span>
                 </a>
             </li>
             <li>
-                <a href="{{ route('report.income-statement') }}" class="{{ request()->routeIs('report.income-statement') ? 'active' : '' }}">
+                <a href="<?php echo e(route('report.income-statement')); ?>" class="<?php echo e(request()->routeIs('report.income-statement') ? 'active' : ''); ?>">
                     <i class="fas fa-chart-line"></i>
                     <span>Laba Rugi</span>
                 </a>
             </li>
             <li>
-                <a href="{{ route('report.trial-balance') }}" class="{{ request()->routeIs('report.trial-balance') ? 'active' : '' }}">
+                <a href="<?php echo e(route('report.trial-balance')); ?>" class="<?php echo e(request()->routeIs('report.trial-balance') ? 'active' : ''); ?>">
                     <i class="fas fa-clipboard-list"></i>
                     <span>Neraca Saldo</span>
                 </a>
@@ -296,7 +296,7 @@
         <div class="menu-section-label">General</div>
         <ul class="sidebar-menu">
             <li>
-                <a href="{{ route('settings.profile') }}" class="{{ request()->routeIs('settings.*') ? 'active' : '' }}">
+                <a href="<?php echo e(route('settings.profile')); ?>" class="<?php echo e(request()->routeIs('settings.*') ? 'active' : ''); ?>">
                     <i class="fas fa-cog"></i>
                     <span>Pengaturan</span>
                 </a>
@@ -306,17 +306,17 @@
 
     <div class="sidebar-footer">
         <div class="user-card">
-            @php
+            <?php
                 $userName = Auth::user()->name ?? 'Admin';
                 $initial = strtoupper(substr($userName, 0, 1));
-            @endphp
-            <div class="user-avatar">{{ $initial }}</div>
+            ?>
+            <div class="user-avatar"><?php echo e($initial); ?></div>
             <div class="user-info">
-                <span class="user-name">{{ $userName }}</span>
-                <span class="user-email">{{ Auth::user()->email ?? 'admin@jayaaba...' }}</span>
+                <span class="user-name"><?php echo e($userName); ?></span>
+                <span class="user-email"><?php echo e(Auth::user()->email ?? 'admin@jayaaba...'); ?></span>
             </div>
-            <form action="{{ route('logout') }}" method="POST" id="logout-sidebar-form" style="display: none;">
-                @csrf
+            <form action="<?php echo e(route('logout')); ?>" method="POST" id="logout-sidebar-form" style="display: none;">
+                <?php echo csrf_field(); ?>
             </form>
             <button class="logout-btn" onclick="confirmLogout()">
                 <i class="fas fa-sign-out-alt"></i>
@@ -326,9 +326,9 @@
 </aside>
 
 <!-- Include Button & Modal CSS & JS -->
-<link rel="stylesheet" href="{{ asset('css/buttons.css') }}?v={{ time() }}">
-<link rel="stylesheet" href="{{ asset('css/modal.css') }}?v={{ time() }}">
-<script src="{{ asset('js/modal.js') }}?v={{ time() }}"></script>
+<link rel="stylesheet" href="<?php echo e(asset('css/buttons.css')); ?>?v=<?php echo e(time()); ?>">
+<link rel="stylesheet" href="<?php echo e(asset('css/modal.css')); ?>?v=<?php echo e(time()); ?>">
+<script src="<?php echo e(asset('js/modal.js')); ?>?v=<?php echo e(time()); ?>"></script>
 
 <script>
 function confirmLogout() {
@@ -337,3 +337,4 @@ function confirmLogout() {
     });
 }
 </script>
+<?php /**PATH D:\xampp_new\htdocs\tyara\resources\views/layouts/sidebar.blade.php ENDPATH**/ ?>

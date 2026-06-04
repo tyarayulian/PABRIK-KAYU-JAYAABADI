@@ -1,0 +1,135 @@
+/* Button Component Styles - Jaya Cash */
+
+:root {
+    --btn-primary-bg: #1e2a78;
+    --btn-primary-hover: #151d54;
+    --btn-secondary-bg: #111111;
+    --btn-secondary-hover: #222222;
+    --btn-outline-border: #e2e8f0;
+    --btn-outline-hover: #f8fafc;
+}
+
+/* Primary Button - Blue */
+.btn-primary {
+    display: inline-block;
+    width: 100%;
+    padding: 16px 24px;
+    background: var(--btn-primary-bg);
+    color: #ffffff;
+    border: none;
+    border-radius: 50px;
+    font-size: 14px;
+    font-weight: 700;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(30, 42, 120, 0.2);
+}
+
+.btn-primary:hover {
+    background: var(--btn-primary-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(30, 42, 120, 0.3);
+}
+
+.btn-primary:active {
+    transform: translateY(0);
+}
+
+/* Secondary Button - Dark */
+.btn-secondary {
+    display: inline-block;
+    width: 100%;
+    padding: 16px 24px;
+    background: var(--btn-secondary-bg);
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-secondary:hover {
+    background: var(--btn-secondary-hover);
+    transform: translateY(-1px);
+}
+
+/* Outline Button */
+.btn-outline {
+    display: inline-block;
+    padding: 14px 28px;
+    background: transparent;
+    color: #1e2a78;
+    border: 2px solid var(--btn-outline-border);
+    border-radius: 50px;
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-outline:hover {
+    background: var(--btn-outline-hover);
+    border-color: #cbd5e1;
+}
+
+/* Danger Button - Red for destructive actions */
+.btn-danger {
+    display: inline-block;
+    width: 100%;
+    padding: 16px 24px;
+    background: #dc2626;
+    color: #ffffff;
+    border: none;
+    border-radius: 50px;
+    font-size: 14px;
+    font-weight: 700;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
+}
+
+.btn-danger:hover {
+    background: #b91c1c;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(220, 38, 38, 0.3);
+}
+
+.btn-danger:active {
+    transform: translateY(0);
+}
+
+/* Button Sizes */
+.btn-sm {
+    padding: 10px 20px;
+    font-size: 13px;
+}
+
+.btn-lg {
+    padding: 18px 32px;
+    font-size: 16px;
+}
+
+/* Button Full Width */
+.btn-block {
+    width: 100%;
+    display: block;
+}
+
+/* Disabled State */
+.btn-primary:disabled,
+.btn-secondary:disabled,
+.btn-danger:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}

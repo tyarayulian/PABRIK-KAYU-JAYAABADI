@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <link rel="icon" type="image/png" href="{{ asset('storage/images/logo 2.png') }}">
+    <link rel="icon" type="image/png" href="<?php echo e(asset('storage/images/logo 2.png')); ?>">
     <title>Masuk - Jaya Cash</title>
     
     <!-- Fonts -->
@@ -15,7 +15,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- Button Components -->
-    <link rel="stylesheet" href="{{ asset('css/buttons.css') }}">
+    <link rel="stylesheet" href="<?php echo e(asset('css/buttons.css')); ?>">
     
     <!-- Scripts -->
     <script src="https://instant.page/5.2.0" type="module"></script>
@@ -257,7 +257,7 @@
                 <p>Singkirkan tugas pencatatan manual yang berulang. Kelola pabrik Anda dengan automasi akuntansi yang cerdas dan hemat waktu!</p>
             </div>
             <div class="copyright">
-                &copy; {{ date('Y') }} Jaya Cash. All rights reserved.
+                &copy; <?php echo e(date('Y')); ?> Jaya Cash. All rights reserved.
             </div>
         </div>
 
@@ -269,17 +269,18 @@
                     <p>Masuk ke sistem akuntansi Jaya Cash untuk mengelola keuangan pabrik Anda.</p>
                 </div>
 
-                @if($errors->any())
+                <?php if($errors->any()): ?>
                     <div class="error-alert">
-                        {{ $errors->first() }}
+                        <?php echo e($errors->first()); ?>
+
                     </div>
-                @endif
+                <?php endif; ?>
 
                 <form method="POST" action="/login" autocomplete="off">
-                    @csrf
+                    <?php echo csrf_field(); ?>
                     <div class="form-group">
                         <label for="email">Email</label>
-                        <input type="email" id="email" name="email" placeholder="nama@perusahaan.com" required value="{{ old('email') }}" autocomplete="email">
+                        <input type="email" id="email" name="email" placeholder="nama@perusahaan.com" required value="<?php echo e(old('email')); ?>" autocomplete="email">
                     </div>
 
                     <div class="form-group" style="margin-bottom: 32px;">
@@ -292,7 +293,7 @@
                 </form>
 
                 <div class="forgot-password">
-                    Lupa kata sandi? <a href="{{ route('password.request') }}">Klik di sini</a>
+                    Lupa kata sandi? <a href="<?php echo e(route('password.request')); ?>">Klik di sini</a>
                 </div>
             </div>
         </div>
@@ -321,4 +322,4 @@
         });
     </script>
 </body>
-</html>
+</html><?php /**PATH D:\xampp_new\htdocs\tyara\resources\views/auth/login.blade.php ENDPATH**/ ?>
