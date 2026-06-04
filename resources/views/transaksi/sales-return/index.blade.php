@@ -5,6 +5,7 @@
 
 @section('styles')
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="{{ asset('css/modal.css') }}?v={{ time() }}">
 <style>
     * {
         font-family: 'Plus Jakarta Sans', sans-serif;
@@ -330,10 +331,10 @@
                                 <a href="{{ route('sales-return.edit', $return->id) }}" class="btn-action" title="Edit">
                                     <i class="fas fa-edit"></i>
                                 </a>
-                                <form action="{{ route('sales-return.destroy', $return->id) }}" method="POST" style="display: inline;">
+                                <form id="deleteForm{{ $return->id }}" action="{{ route('sales-return.destroy', $return->id) }}" method="POST" style="display: inline;">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="btn-action btn-delete" title="Hapus" onclick="return confirm('Apakah Anda yakin ingin menghapus data ini?')">
+                                    <button type="button" class="btn-action btn-delete" title="Hapus" onclick="deleteReturn({{ $return->id }}, '{{ $return->product->name ?? 'retur ini' }}')">
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </form>
