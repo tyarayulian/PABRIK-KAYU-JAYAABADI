@@ -155,7 +155,7 @@
                 <div class="form-section" style="margin-bottom: 0;">
                     <div class="section-info">
                         <h3>Detail History Stok</h3>
-                        <p>Ubah jumlah unit, harga, atau keterangan history stok ini.</p>
+                        <p>Ubah jumlah kubik, harga, atau keterangan history stok ini.</p>
                     </div>
                     <div class="form-grid">
                         <div class="form-group full-width">
@@ -164,7 +164,7 @@
                         </div>
 
                         <div class="form-group">
-                            <label>Jumlah Unit ({{ $product->unit }})*</label>
+                            <label>Jumlah Kubik ({{ $product->unit }})*</label>
                             <input type="text" inputmode="decimal" name="quantity" class="form-control" value="{{ old('quantity', (float)$stock->quantity) }}" placeholder="0" required>
                         </div>
 

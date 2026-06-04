@@ -167,7 +167,7 @@
                 <div class="form-section" style="margin-bottom: 0;">
                     <div class="section-info">
                         <h3>Detail Penambahan Stok</h3>
-                        <p>Masukkan jumlah unit dan harga pembelian (HPP) untuk penambahan stok produk ini.</p>
+                        <p>Masukkan jumlah kubik dan harga pembelian (HPP) untuk penambahan stok produk ini.</p>
                     </div>
                     <div class="form-grid">
                         <div class="form-group full-width" style="grid-column: span 2;">

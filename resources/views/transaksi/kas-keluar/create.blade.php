@@ -244,7 +244,7 @@
                         </div>
 
                         <div class="form-group">
-                            <label>QTY (JUMLAH UNIT)*</label>
+                            <label>QTY (KUBIK)*</label>
                             <input type="number" step="1" id="quantity" name="quantity" placeholder="0" value="{{ old('quantity') }}" class="form-control" oninput="calculateAmount()" required>
                         </div>
 

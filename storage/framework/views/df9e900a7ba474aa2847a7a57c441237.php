@@ -1,9 +1,7 @@
-@extends('layouts.app')
+<?php $__env->startSection('title', 'Tambah Penjualan'); ?>
+<?php $__env->startSection('breadcrumb', 'Transaksi > Penjualan > Tambah'); ?>
 
-@section('title', 'Tambah Penjualan')
-@section('breadcrumb', 'Transaksi > Penjualan > Tambah')
-
-@section('styles')
+<?php $__env->startSection('styles'); ?>
 <style>
     .page-container { 
         padding: 40px 24px; 
@@ -194,35 +192,35 @@
     }
     .btn-save:hover { background: #151d54; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(30, 42, 120, 0.2); }
 </style>
-@endsection
+<?php $__env->stopSection(); ?>
 
-@section('content')
+<?php $__env->startSection('content'); ?>
 <div class="page-container">
     <div class="card">
         <div class="card-header">
             <h2>Tambah Penjualan</h2>
-            <a href="{{ route('transaksi.index') }}" class="btn-cancel-header">
+            <a href="<?php echo e(route('transaksi.index')); ?>" class="btn-cancel-header">
                 <i class="fas fa-times"></i> Batal
             </a>
         </div>
         
-        <form action="{{ route('kas-masuk.store') }}" method="POST" enctype="multipart/form-data">
-            @csrf
+        <form action="<?php echo e(route('kas-masuk.store')); ?>" method="POST" enctype="multipart/form-data">
+            <?php echo csrf_field(); ?>
             
             <div class="card-body">
-                @if(session('error') || $errors->any())
+                <?php if(session('error') || $errors->any()): ?>
                     <div style="background-color: #fff1f2; color: #dc2626; padding: 16px; border-radius: 12px; margin-bottom: 32px; font-size: 14px; font-weight: 600; border: 1px solid #ffe4e6;">
-                        @if(session('error')) 
-                            {{ session('error') }} 
-                        @else 
+                        <?php if(session('error')): ?> 
+                            <?php echo e(session('error')); ?> 
+                        <?php else: ?> 
                             <ul style="margin: 0; padding-left: 20px;">
-                                @foreach($errors->all() as $error)
-                                    <li>{{ $error }}</li>
-                                @endforeach
+                                <?php $__currentLoopData = $errors->all(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $error): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <li><?php echo e($error); ?></li>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </ul>
-                        @endif
+                        <?php endif; ?>
                     </div>
-                @endif
+                <?php endif; ?>
 
                 <!-- Section 1: Informasi Transaksi -->
                 <div class="form-section">
@@ -233,31 +231,32 @@
                     <div class="form-grid">
                         <div class="form-group">
                             <label>TANGGAL*</label>
-                            <input type="date" name="date" value="{{ old('date', date('Y-m-d')) }}" class="form-control">
+                            <input type="date" name="date" value="<?php echo e(old('date', date('Y-m-d'))); ?>" class="form-control">
                         </div>
 
                         <div id="product-group" class="form-group">
                             <label>PRODUK*</label>
                             <select id="product_id" name="product_id" class="form-control" onchange="handleProductChange(this)" required>
                                 <option value="">-- Pilih Produk --</option>
-                                @php
+                                <?php
                                     $groupedProductsByWood = $products->groupBy('wood_type');
-                                @endphp
-                                @foreach($groupedProductsByWood as $woodType => $items)
-                                    @if($woodType)
-                                        <option disabled style="font-weight: 800; background-color: #f1f5f9; color: #1e2a78;">-- {{ strtoupper($woodType) }} --</option>
-                                        @foreach($items as $product)
-                                            <option value="{{ $product->id }}" 
-                                                    data-category-id="{{ $product->category_id }}" 
-                                                    data-price="{{ (int)$product->price }}" 
-                                                    data-unit="{{ $product->unit }}" 
-                                                    data-stock="{{ (float)$product->calculated_stock }}" 
-                                                    {{ (old('product_id') == $product->id || (isset($selectedProductId) && $selectedProductId == $product->id)) ? 'selected' : '' }}>
-                                                &nbsp;&nbsp;&nbsp;{{ $product->product_category }} - {{ $product->size ?: $product->name }}
+                                ?>
+                                <?php $__currentLoopData = $groupedProductsByWood; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $woodType => $items): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <?php if($woodType): ?>
+                                        <option disabled style="font-weight: 800; background-color: #f1f5f9; color: #1e2a78;">-- <?php echo e(strtoupper($woodType)); ?> --</option>
+                                        <?php $__currentLoopData = $items; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $product): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                            <option value="<?php echo e($product->id); ?>" 
+                                                    data-category-id="<?php echo e($product->category_id); ?>" 
+                                                    data-price="<?php echo e((int)$product->price); ?>" 
+                                                    data-unit="<?php echo e($product->unit); ?>" 
+                                                    data-stock="<?php echo e((float)$product->calculated_stock); ?>" 
+                                                    <?php echo e((old('product_id') == $product->id || (isset($selectedProductId) && $selectedProductId == $product->id)) ? 'selected' : ''); ?>>
+                                                &nbsp;&nbsp;&nbsp;<?php echo e($product->product_category); ?> - <?php echo e($product->size ?: $product->name); ?>
+
                                             </option>
-                                        @endforeach
-                                    @endif
-                                @endforeach
+                                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                    <?php endif; ?>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </select>
                             <div id="stock-info" style="display: none; font-size: 12px; color: #1e2a78; margin-top: 8px; font-weight: 700; text-transform: uppercase;">
                                 SISA STOK: <span id="stock-value">0</span> <span id="stock-unit">kubik</span>
@@ -266,26 +265,26 @@
 
                         <div class="form-group">
                             <label>QTY (KUBIK)*</label>
-                            <input type="number" step="1" id="quantity" name="quantity" placeholder="0" value="{{ old('quantity') }}" class="form-control" oninput="calculateAmount()" required>
+                            <input type="number" step="1" id="quantity" name="quantity" placeholder="0" value="<?php echo e(old('quantity')); ?>" class="form-control" oninput="calculateAmount()" required>
                         </div>
 
                         <div class="form-group">
                             <label>HARGA SATUAN (RP)*</label>
-                            <input type="text" id="price" name="price" placeholder="Rp 0" value="{{ old('price') }}" class="form-control" oninput="calculateAmount()" required>
+                            <input type="text" id="price" name="price" placeholder="Rp 0" value="<?php echo e(old('price')); ?>" class="form-control" oninput="calculateAmount()" required>
                         </div>
 
                         <div class="form-group full-width">
                             <label>KETERANGAN / DESKRIPSI</label>
-                            <textarea name="description" placeholder="Contoh: Penjualan kayu duren ke Toko Mebel Sejahtera" class="form-control" rows="3" style="resize: none;">{{ old('description') }}</textarea>
+                            <textarea name="description" placeholder="Contoh: Penjualan kayu duren ke Toko Mebel Sejahtera" class="form-control" rows="3" style="resize: none;"><?php echo e(old('description')); ?></textarea>
                         </div>
 
                         <div class="form-group full-width">
                             <label>TOTAL JUMLAH (RP)</label>
-                            <input type="text" id="amount" name="amount" placeholder="Rp 0" value="{{ old('amount') }}" class="form-control" readonly style="background-color: #f8fafc; font-weight: 800; color: #1e2a78;">
+                            <input type="text" id="amount" name="amount" placeholder="Rp 0" value="<?php echo e(old('amount')); ?>" class="form-control" readonly style="background-color: #f8fafc; font-weight: 800; color: #1e2a78;">
                         </div>
 
-                        <input type="hidden" id="category_id" name="category_id" value="{{ old('category_id') }}">
-                        <input type="hidden" id="account_id" name="account_id" value="{{ old('account_id') }}">
+                        <input type="hidden" id="category_id" name="category_id" value="<?php echo e(old('category_id')); ?>">
+                        <input type="hidden" id="account_id" name="account_id" value="<?php echo e(old('account_id')); ?>">
                     </div>
                 </div>
 
@@ -465,5 +464,7 @@
     });
 </script>
 
-@include('components.file-viewer')
-@endsection
+<?php echo $__env->make('components.file-viewer', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH D:\xampp_new\htdocs\tyara\resources\views/transaksi/kas-masuk/create.blade.php ENDPATH**/ ?>

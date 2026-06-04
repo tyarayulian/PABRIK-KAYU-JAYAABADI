@@ -667,7 +667,7 @@
 <script>
     setTimeout(function() {
         const notification = document.createElement('div');
-        notification.style.cssText = 'position:fixed;top:20px;right:20px;background:#16a34a;color:white;padding:16px 24px;border-radius:12px;z-index:10000;box-shadow:0 10px 30px rgba(0,0,0,0.2);font-weight:600;';
+        notification.style.cssText = 'position:fixed;top:20px;right:20px;background:#1e2a78;color:white;padding:16px 24px;border-radius:12px;z-index:10000;box-shadow:0 10px 30px rgba(30,42,120,0.3);font-weight:600;';
         notification.textContent = '✓ {{ session("success") }}';
         document.body.appendChild(notification);
         setTimeout(() => notification.remove(), 3000);
