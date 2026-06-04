@@ -467,7 +467,7 @@
         z-index: 2000;
         align-items: center;
         justify-content: center;
-        backdrop-filter: blur(4px);
+        /* NO BLUR */
     }
 
     .modal-overlay.active { display: flex; }

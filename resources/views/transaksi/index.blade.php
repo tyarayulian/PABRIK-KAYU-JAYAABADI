@@ -506,7 +506,7 @@
         z-index: 2000;
         align-items: center;
         justify-content: center;
-        backdrop-filter: blur(8px);
+        /* NO BLUR */
     }
 
     .modal-overlay.active { display: flex; }
@@ -785,7 +785,7 @@
         z-index: 2000;
         align-items: center;
         justify-content: center;
-        backdrop-filter: blur(4px);
+        /* NO BLUR */
         transition: all 0.3s ease;
     }
 
