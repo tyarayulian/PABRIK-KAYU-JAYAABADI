@@ -6,6 +6,7 @@
 @section('styles')
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pdfobject/2.2.8/pdfobject.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="{{ asset('css/modal.css') }}?v={{ time() }}">
 <style>
     * {
         font-family: 'Plus Jakarta Sans', sans-serif;
@@ -1410,7 +1411,7 @@
 
 @include('components.file-viewer')
 
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="{{ asset('js/modal.js') }}?v={{ time() }}"></script>
 <script>
     const ITEMS_PER_PAGE = 10;
     let currentPage = 1;
@@ -1596,58 +1597,28 @@
     }
 
     function deleteTransaction(id, type) {
-        Swal.fire({
-            title: 'Hapus Transaksi?',
-            text: 'Apakah Anda yakin ingin menghapus transaksi ini?',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#ef4444',
-            cancelButtonColor: '#9ca3af',
-            confirmButtonText: 'Hapus',
-            cancelButtonText: 'Batal',
-            background: '#ffffff',
-            color: '#111827',
-            iconColor: '#f59e0b',
-            didOpen: () => {
-                const confirmBtn = Swal.getConfirmButton();
-                const cancelBtn = Swal.getCancelButton();
-                if (confirmBtn) {
-                    confirmBtn.style.borderRadius = '8px';
-                    confirmBtn.style.fontWeight = '600';
-                    confirmBtn.style.padding = '10px 24px';
-                    confirmBtn.style.fontSize = '14px';
-                }
-                if (cancelBtn) {
-                    cancelBtn.style.borderRadius = '8px';
-                    cancelBtn.style.fontWeight = '600';
-                    cancelBtn.style.padding = '10px 24px';
-                    cancelBtn.style.fontSize = '14px';
-                    cancelBtn.style.color = '#6b7280';
-                }
-            }
-        }).then((result) => {
-            if (result.isConfirmed) {
-                const endpoint = type === 'income' 
-                    ? `{{ route("kas-masuk.destroy", ":id", false) }}`.replace(':id', id)
-                    : `{{ route("kas-keluar.destroy", ":id", false) }}`.replace(':id', id);
+        Modal.delete('transaksi ini', function() {
+            const endpoint = type === 'income' 
+                ? `{{ route("kas-masuk.destroy", ":id", false) }}`.replace(':id', id)
+                : `{{ route("kas-keluar.destroy", ":id", false) }}`.replace(':id', id);
 
-                fetch(endpoint, {
-                    method: 'DELETE',
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                        'Accept': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        return response.json().then(data => {
-                            throw new Error(data.message || 'Gagal menghapus data');
-                        });
-                    }
-                    return response.json();
-                })
-                .then(data => {
+            fetch(endpoint, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(data => {
+                        throw new Error(data.message || 'Gagal menghapus data');
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
                     if (data.success) {
                         // Find and remove the transaction row from DOM
                         const transactionRow = document.querySelector(`div[data-transaction-id="${id}"]`);
@@ -1708,46 +1679,15 @@
                         currentPage = 1;
                         applyPaginationToVisibleRows();
                         
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Terhapus!',
-                            text: data.message,
-                            timer: 1200,
-                            timerProgressBar: true,
-                            showConfirmButton: false,
-                            background: '#ffffff',
-                            color: '#111827',
-                            iconColor: '#14b8a6',
-                            allowOutsideClick: false,
-                            didOpen: () => {
-                                const progressBar = document.querySelector('.swal2-timer-progress-bar');
-                                if (progressBar) {
-                                    progressBar.style.backgroundColor = '#14b8a6';
-                                }
-                            }
-                        });
+                        // Show success notification
+                        showTransactionNotification(data.message || 'Transaksi berhasil dihapus', 'success');
                     } else {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Gagal!',
-                            text: data.message || 'Terjadi kesalahan saat menghapus',
-                            confirmButtonColor: '#ef4444',
-                            background: '#ffffff',
-                            color: '#111827'
-                        });
+                        alert(data.message || 'Terjadi kesalahan saat menghapus');
                     }
                 })
                 .catch(error => {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Terjadi Kesalahan',
-                        text: error.message || 'Gagal menghapus transaksi',
-                        confirmButtonColor: '#ef4444',
-                        background: '#ffffff',
-                        color: '#111827'
-                    });
+                    alert(error.message || 'Gagal menghapus transaksi');
                 });
-            }
         });
     }
 
@@ -2204,77 +2144,41 @@
         const checkedCheckboxes = document.querySelectorAll('.transaction-checkbox:checked');
         
         if (checkedCheckboxes.length === 0) {
-            Swal.fire({
-                icon: 'info',
-                title: 'Pilih Transaksi',
-                text: 'Silakan pilih minimal satu transaksi untuk dihapus',
-                confirmButtonColor: '#1e2a78'
-            });
+            alert('Silakan pilih minimal satu transaksi untuk dihapus');
             return;
         }
         
-        Swal.fire({
-            title: 'Hapus Transaksi?',
-            text: `Apakah anda yakin ingin menghapus ${checkedCheckboxes.length} transaksi terpilih?`,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonText: 'Ya, Hapus',
-            cancelButtonText: 'Batal',
-            confirmButtonColor: '#ef4444',
-            cancelButtonColor: '#9ca3af',
-            background: '#ffffff',
-            color: '#111827',
-            iconColor: '#f59e0b',
-            didOpen: () => {
-                const confirmBtn = Swal.getConfirmButton();
-                const cancelBtn = Swal.getCancelButton();
-                if (confirmBtn) {
-                    confirmBtn.style.borderRadius = '8px';
-                    confirmBtn.style.fontWeight = '600';
-                    confirmBtn.style.padding = '10px 24px';
-                    confirmBtn.style.fontSize = '14px';
-                }
-                if (cancelBtn) {
-                    cancelBtn.style.borderRadius = '8px';
-                    cancelBtn.style.fontWeight = '600';
-                    cancelBtn.style.padding = '10px 24px';
-                    cancelBtn.style.fontSize = '14px';
-                    cancelBtn.style.color = '#6b7280';
-                }
-            }
-        }).then((result) => {
-            if (result.isConfirmed) {
-                showTransactionNotification(`Menghapus ${checkedCheckboxes.length} transaksi...`, 'success');
-                
-                const ids = Array.from(checkedCheckboxes).map(checkbox => checkbox.value);
-                
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = '{{ route('cash.destroyBulk', [], false) }}';
-                
-                const csrfInput = document.createElement('input');
-                csrfInput.type = 'hidden';
-                csrfInput.name = '_token';
-                csrfInput.value = '{{ csrf_token() }}';
-                form.appendChild(csrfInput);
-                
-                const methodInput = document.createElement('input');
-                methodInput.type = 'hidden';
-                methodInput.name = '_method';
-                methodInput.value = 'DELETE';
-                form.appendChild(methodInput);
-                
-                ids.forEach(id => {
-                    const input = document.createElement('input');
-                    input.type = 'hidden';
-                    input.name = 'ids[]';
-                    input.value = id;
-                    form.appendChild(input);
-                });
-                
-                document.body.appendChild(form);
-                setTimeout(() => form.submit(), 500);
-            }
+        Modal.delete(`${checkedCheckboxes.length} transaksi terpilih`, function() {
+            showTransactionNotification(`Menghapus ${checkedCheckboxes.length} transaksi...`, 'success');
+            
+            const ids = Array.from(checkedCheckboxes).map(checkbox => checkbox.value);
+            
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '{{ route('cash.destroyBulk', [], false) }}';
+            
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = '_token';
+            csrfInput.value = '{{ csrf_token() }}';
+            form.appendChild(csrfInput);
+            
+            const methodInput = document.createElement('input');
+            methodInput.type = 'hidden';
+            methodInput.name = '_method';
+            methodInput.value = 'DELETE';
+            form.appendChild(methodInput);
+            
+            ids.forEach(id => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'ids[]';
+                input.value = id;
+                form.appendChild(input);
+            });
+            
+            document.body.appendChild(form);
+            setTimeout(() => form.submit(), 500);
         });
     }
 </script>
