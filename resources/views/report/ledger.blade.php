@@ -4,6 +4,7 @@
 
 @section('styles')
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="{{ asset('css/print-report.css') }}?v={{ time() }}">
 <style>
     * {
         font-family: 'Plus Jakarta Sans', sans-serif;
@@ -236,9 +237,127 @@
         color: white;
     }
 
+    /* Additional print customizations beyond the standard print-report.css */
     @media print {
-        .filter-section, .btn-export, .sidebar { display: none !important; }
-        .account-card { border: 1px solid #000; border-radius: 0; }
+        @page {
+            size: A4 landscape;
+            margin: 15mm 10mm;
+        }
+
+        * {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        body {
+            background: white !important;
+            overflow: hidden !important;
+        }
+
+        /* Hide filters and buttons */
+        .filter-section,
+        .header-content,
+        .btn-outline,
+        .btn-filter,
+        .btn-reset {
+            display: none !important;
+        }
+
+        .header-card {
+            border: none;
+            box-shadow: none;
+            border-radius: 0;
+            margin-bottom: 5mm;
+        }
+
+        /* Account cards - NO page break */
+        .account-card { 
+            border: 2px solid #000 !important; 
+            border-radius: 0 !important;
+            page-break-inside: avoid !important;
+            margin-bottom: 5mm !important;
+            overflow: hidden !important;
+        }
+
+        /* Account header */
+        .account-banner {
+            background: #000 !important;
+            color: #ffffff !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            padding: 3mm !important;
+            border-bottom: 2px solid #000 !important;
+        }
+
+        .account-banner * {
+            color: #ffffff !important;
+            font-size: 10pt !important;
+            font-weight: 700 !important;
+        }
+
+        /* Table with clear borders */
+        .ledger-table {
+            font-size: 9pt !important;
+            border-collapse: collapse !important;
+            width: 100% !important;
+        }
+
+        .ledger-table th {
+            font-size: 8pt !important;
+            padding: 2mm !important;
+            background: #f0f0f0 !important;
+            border: 1px solid #000 !important;
+            font-weight: 700 !important;
+            color: #000 !important;
+            text-align: left !important;
+        }
+
+        .ledger-table td {
+            padding: 2mm !important;
+            font-size: 9pt !important;
+            border: 1px solid #666 !important;
+            color: #000 !important;
+        }
+
+        /* Amount columns in monospace */
+        .amount-cell,
+        .ledger-table td:nth-child(4),
+        .ledger-table td:nth-child(5),
+        .ledger-table td:nth-child(6) {
+            font-family: 'Courier New', monospace !important;
+            text-align: right !important;
+            font-weight: 600 !important;
+        }
+
+        /* Summary section */
+        .account-summary {
+            padding: 3mm !important;
+            border-top: 2px solid #000 !important;
+            background: #f0f0f0 !important;
+            -webkit-print-color-adjust: exact !important;
+        }
+
+        .account-summary .summary-label {
+            font-size: 9pt !important;
+            font-weight: 700 !important;
+        }
+
+        .account-summary .summary-value {
+            font-family: 'Courier New', monospace !important;
+            font-size: 10pt !important;
+            font-weight: 700 !important;
+        }
+
+        /* Remove colors in print */
+        .text-debit,
+        .text-credit {
+            color: #000 !important;
+        }
+
+        /* Hide scrollbar */
+        ::-webkit-scrollbar {
+            display: none !important;
+        }
     }
 </style>
 @endsection

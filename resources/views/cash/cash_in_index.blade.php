@@ -590,43 +590,19 @@
     }
 
     function deleteCashIn(id) {
-        Swal.fire({
-            title: 'Hapus Pencatatan Kas Masuk?',
-            text: 'Apakah Anda yakin ingin menghapus pencatatan kas masuk ini? Tindakan ini tidak dapat dibatalkan.',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#ef4444',
-            cancelButtonColor: '#9ca3af',
-            confirmButtonText: 'Ya, Hapus',
-            cancelButtonText: 'Batal',
-            background: '#ffffff',
-            color: '#111827',
-            iconColor: '#f59e0b',
-            didOpen: () => {
-                const confirmBtn = Swal.getConfirmButton();
-                const cancelBtn = Swal.getCancelButton();
-                if (confirmBtn) {
-                    confirmBtn.style.borderRadius = '8px';
-                    confirmBtn.style.fontWeight = '600';
-                    confirmBtn.style.padding = '10px 24px';
-                    confirmBtn.style.fontSize = '14px';
-                }
-                if (cancelBtn) {
-                    cancelBtn.style.borderRadius = '8px';
-                    cancelBtn.style.fontWeight = '600';
-                    cancelBtn.style.padding = '10px 24px';
-                    cancelBtn.style.fontSize = '14px';
-                    cancelBtn.style.color = '#6b7280';
-                }
-            }
-        }).then((result) => {
-            if (result.isConfirmed) {
+        if (typeof Modal !== 'undefined') {
+            Modal.delete('pencatatan kas masuk ini', function() {
+                // Use POST with _method=DELETE
+                const formData = new FormData();
+                formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
+                formData.append('_method', 'DELETE');
+                
                 fetch('{{ route("cash.in.destroy", ":id") }}'.replace(':id', id), {
-                    method: 'DELETE',
+                    method: 'POST',
+                    body: formData,
                     headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                        'Accept': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest'
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
                     }
                 })
                 .then(response => {
@@ -639,16 +615,54 @@
                 })
                 .then(data => {
                     if (data.success) {
-                        showNotification(data.message);
-                        setTimeout(() => location.reload(), 8300);
+                        if (typeof Toast !== 'undefined') {
+                            Toast.success(data.message);
+                        } else {
+                            showNotification(data.message);
+                        }
+                        setTimeout(() => location.reload(), 1500);
                     } else {
-                        showNotification(data.message || 'Terjadi kesalahan saat menghapus', true);
+                        if (typeof Toast !== 'undefined') {
+                            Toast.error(data.message || 'Terjadi kesalahan');
+                        } else {
+                            showNotification(data.message || 'Terjadi kesalahan', true);
+                        }
                     }
                 })
                 .catch(error => {
-                    showNotification('Error: ' + error.message, true);
+                    if (typeof Toast !== 'undefined') {
+                        Toast.error('Error: ' + error.message);
+                    } else {
+                        showNotification('Error: ' + error.message, true);
+                    }
                 });
+            });
+        } else {
+            // Fallback
+            if (confirm('Apakah Anda yakin ingin menghapus pencatatan kas masuk ini?')) {
+                const formData = new FormData();
+                formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
+                formData.append('_method', 'DELETE');
+                
+                fetch('{{ route("cash.in.destroy", ":id") }}'.replace(':id', id), {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message);
+                        location.reload();
+                    }
+                })
+                .catch(error => alert('Error: ' + error.message));
             }
+        }
+    }            }
         });
     }
 

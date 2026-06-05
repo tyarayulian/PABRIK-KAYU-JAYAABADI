@@ -11,16 +11,32 @@ class CashTransactionController extends Controller
 {
     public function index()
     {
+        // Get date filter from request
+        $startDate = request('start_date');
+        $endDate = request('end_date');
+
         // Get all cash in and out that are NOT product related
         $cashIns = KasMasuk::with(['category', 'category.account'])
             ->whereHas('category', function ($q) {
                 $q->where('is_product', false);
+            })
+            ->when($startDate, function ($query) use ($startDate) {
+                return $query->whereDate('date', '>=', $startDate);
+            })
+            ->when($endDate, function ($query) use ($endDate) {
+                return $query->whereDate('date', '<=', $endDate);
             })
             ->orderBy('id', 'desc')->get();
 
         $cashOuts = KasKeluar::with(['category', 'category.account'])
             ->whereHas('category', function ($q) {
                 $q->where('is_product', false);
+            })
+            ->when($startDate, function ($query) use ($startDate) {
+                return $query->whereDate('date', '>=', $startDate);
+            })
+            ->when($endDate, function ($query) use ($endDate) {
+                return $query->whereDate('date', '<=', $endDate);
             })
             ->orderBy('id', 'desc')->get();
 
@@ -84,5 +100,56 @@ class CashTransactionController extends Controller
             ->orderBy('name')->get();
 
         return view('transaksi.cash-out.create', compact('categories'));
+    }
+
+    public function editIn($id)
+    {
+        $kasMasuk = KasMasuk::findOrFail($id);
+        $categories = Category::where('is_active', true)
+            ->where('is_product', false)
+            ->where('type', 'cash_in')
+            ->orderBy('name')->get();
+
+        return view('transaksi.cash-in.edit', compact('kasMasuk', 'categories'));
+    }
+
+    public function editOut($id)
+    {
+        $kasKeluar = KasKeluar::findOrFail($id);
+        $categories = Category::where('is_active', true)
+            ->where('is_product', false)
+            ->where('type', 'cash_out')
+            ->orderBy('name')->get();
+
+        return view('transaksi.cash-out.edit', compact('kasKeluar', 'categories'));
+    }
+
+    public function show($type, $id)
+    {
+        try {
+            if ($type === 'income') {
+                $transaction = KasMasuk::with(['category', 'category.account'])->findOrFail($id);
+            } else {
+                $transaction = KasKeluar::with(['category', 'category.account'])->findOrFail($id);
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'id' => $transaction->id,
+                    'date' => $transaction->date,
+                    'type' => $type,
+                    'category_name' => $transaction->category->name ?? '-',
+                    'description' => $transaction->description,
+                    'amount' => $transaction->amount,
+                    'file_url' => $transaction->file_path ? asset('storage/' . $transaction->file_path) : null,
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Data tidak ditemukan'
+            ], 404);
+        }
     }
 }

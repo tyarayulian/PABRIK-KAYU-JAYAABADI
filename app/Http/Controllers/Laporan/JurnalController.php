@@ -128,6 +128,95 @@ class JurnalController extends Controller
         }
     }
 
+    public function print(Request $request)
+    {
+        // Auto-sync before displaying
+        GeneralJournal::syncAll();
+
+        $filterType = $request->input('filter_type', 'per_bulan');
+        $year = $request->input('year', Carbon::now()->year);
+        $monthInput = $request->input('month');
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+
+        if ($startDate) {
+            $startDate = Carbon::parse($startDate)->startOfDay();
+        }
+        if ($endDate) {
+            $endDate = Carbon::parse($endDate)->endOfDay();
+        }
+
+        $month = null;
+        if ($filterType === 'per_bulan') {
+            if ($monthInput) {
+                $date = Carbon::parse($monthInput);
+                $month = $date->month;
+                $year = $date->year;
+            } else {
+                $month = Carbon::now()->month;
+                $year = Carbon::now()->year;
+            }
+        }
+
+        $query = GeneralJournal::with('account');
+
+        if ($filterType === 'per_bulan') {
+            $query->whereYear('journal_date', $year)
+                ->whereMonth('journal_date', $month);
+        } elseif ($filterType === 'per_tahun') {
+            $query->whereYear('journal_date', $year);
+        } elseif ($filterType === 'custom' && $startDate && $endDate) {
+            $query->whereBetween('journal_date', [$startDate, $endDate]);
+        }
+
+        $journals = $query->orderBy('journal_date', 'asc')->orderBy('id', 'asc')->get();
+
+        $totalDebit = $journals->where('type', 'debit')->sum('amount');
+        $totalCredit = $journals->where('type', 'credit')->sum('amount');
+
+        $groupedJournalsRaw = [];
+        foreach ($journals as $journal) {
+            $key = $journal->reference ?? ($journal->journal_date->format('Y-m-d H:i:s').'|'.$journal->source_id.'|'.$journal->id);
+
+            if (! isset($groupedJournalsRaw[$key])) {
+                $groupedJournalsRaw[$key] = [
+                    'id' => $journal->source_id ?? null,
+                    'date' => $journal->journal_date,
+                    'description' => $journal->description,
+                    'reference' => $journal->reference,
+                    'entries' => [],
+                ];
+            }
+
+            $groupedJournalsRaw[$key]['entries'][] = $journal;
+        }
+
+        // Sort entries in each group (debit before credit)
+        foreach ($groupedJournalsRaw as &$group) {
+            usort($group['entries'], function ($a, $b) {
+                if ($a->type === $b->type) {
+                    return 0;
+                }
+
+                return $a->type === 'debit' ? -1 : 1;
+            });
+        }
+
+        // Convert to collection WITHOUT pagination for print
+        $groupedCollection = collect(array_values($groupedJournalsRaw));
+
+        // Create fake paginator for compatibility with view
+        $journals = new LengthAwarePaginator(
+            $groupedCollection->all(),
+            $groupedCollection->count(),
+            $groupedCollection->count(), // Show all items
+            1, // Always page 1
+            ['path' => $request->url(), 'query' => $request->query()]
+        );
+
+        return view('report.journal-print', compact('journals', 'totalDebit', 'totalCredit', 'year', 'month', 'filterType', 'startDate', 'endDate'));
+    }
+
     public function exportExcel(Request $request)
     {
         // Auto-sync before exporting

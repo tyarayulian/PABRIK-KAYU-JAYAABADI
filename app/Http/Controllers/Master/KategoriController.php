@@ -115,11 +115,24 @@ class KategoriController extends Controller
     public function destroy($id)
     {
         try {
-            Category::findOrFail($id)->delete();
+            $category = Category::findOrFail($id);
+            
+            // Check if category is used in any transactions
+            $usedInKasMasuk = \App\Models\KasMasuk::where('category_id', $id)->exists();
+            $usedInKasKeluar = \App\Models\KasKeluar::where('category_id', $id)->exists();
+            
+            if ($usedInKasMasuk || $usedInKasKeluar) {
+                return response()->json([
+                    'success' => false, 
+                    'message' => 'Kategori tidak dapat dihapus karena masih digunakan dalam transaksi'
+                ], 400);
+            }
+            
+            $category->delete();
 
             return response()->json(['success' => true, 'message' => 'Kategori berhasil dihapus']);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Gagal menghapus kategori'], 500);
+            return response()->json(['success' => false, 'message' => 'Gagal menghapus kategori: ' . $e->getMessage()], 500);
         }
     }
 
@@ -132,11 +145,38 @@ class KategoriController extends Controller
         }
 
         try {
-            Category::whereIn('id', $ids)->delete();
+            // Check if any category is used in transactions
+            $usedIds = [];
+            $deletableIds = [];
+            
+            foreach ($ids as $id) {
+                $usedInKasMasuk = \App\Models\KasMasuk::where('category_id', $id)->exists();
+                $usedInKasKeluar = \App\Models\KasKeluar::where('category_id', $id)->exists();
+                
+                if ($usedInKasMasuk || $usedInKasKeluar) {
+                    $usedIds[] = $id;
+                } else {
+                    $deletableIds[] = $id;
+                }
+            }
+            
+            if (!empty($deletableIds)) {
+                Category::whereIn('id', $deletableIds)->delete();
+            }
+            
+            $message = count($deletableIds) . ' kategori berhasil dihapus';
+            if (!empty($usedIds)) {
+                $message .= '. ' . count($usedIds) . ' kategori tidak dapat dihapus karena masih digunakan dalam transaksi';
+            }
 
-            return response()->json(['success' => true, 'message' => count($ids).' kategori berhasil dihapus']);
+            return response()->json([
+                'success' => true, 
+                'message' => $message,
+                'deleted' => count($deletableIds),
+                'skipped' => count($usedIds)
+            ]);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Gagal menghapus kategori terpilih'], 500);
+            return response()->json(['success' => false, 'message' => 'Gagal menghapus kategori terpilih: ' . $e->getMessage()], 500);
         }
     }
 }

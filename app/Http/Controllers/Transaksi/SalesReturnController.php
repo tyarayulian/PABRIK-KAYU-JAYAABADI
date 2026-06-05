@@ -172,9 +172,25 @@ class SalesReturnController extends Controller
             }
             $salesReturn->delete();
             DB::commit();
+            
+            if (request()->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Retur penjualan berhasil dihapus'
+                ]);
+            }
+            
             return redirect()->route('sales-return.index')->with('success', 'Retur penjualan berhasil dihapus');
         } catch (\Exception $e) {
             DB::rollBack();
+            
+            if (request()->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal: ' . $e->getMessage()
+                ], 500);
+            }
+            
             return back()->with('error', 'Gagal: ' . $e->getMessage());
         }
     }

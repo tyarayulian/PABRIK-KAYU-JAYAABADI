@@ -258,13 +258,6 @@
         </div>
     @endif
 
-    @if (session('success'))
-        <div class="alert alert-success">
-            <i class="fas fa-check-circle"></i>
-            {{ session('success') }}
-        </div>
-    @endif
-
     <div class="settings-grid">
         <!-- Profil Card -->
         <div class="settings-card">
@@ -364,7 +357,7 @@
                 <p>Terakhir Login: <span>{{ now()->format('d M Y, H:i') }}</span></p>
                 <p>Status: <span style="color: #10b981;">AKTIF</span></p>
             </div>
-            <form method="POST" action="#" style="margin-top: 24px;">
+            <form method="POST" action="{{ route('logout') }}" style="margin-top: 24px;">
                 @csrf
                 <button type="submit" class="btn-outline" style="width: 100%; border-color: #fecdd3; color: #e11d48;">
                     <i class="fas fa-sign-out-alt"></i> Logout dari Semua Perangkat
@@ -423,4 +416,10 @@
         editBtn.innerHTML = '<i class="fas fa-edit"></i> Edit Profil';
     }
 </script>
+
+@if(session('success'))
+<script>
+    Toast.success('{{ session("success") }}');
+</script>
+@endif
 @endsection

@@ -71,6 +71,7 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/transaksi', [TransaksiController::class, 'index'])->name('transaksi.index');
     Route::get('/transaksi-kas', [CashTransactionController::class, 'index'])->name('cash.index');
+    Route::get('/api/cash/{type}/{id}', [CashTransactionController::class, 'show'])->name('api.cash-transaction.detail');
     Route::resource('kas-masuk', KasMasukController::class);
     Route::resource('kas-keluar', KasKeluarController::class);
     Route::resource('sales-return', SalesReturnController::class);
@@ -83,6 +84,8 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/in/create', [CashTransactionController::class, 'createIn'])->name('cash.in.create');
         Route::get('/out/create', [CashTransactionController::class, 'createOut'])->name('cash.out.create');
+        Route::get('/in/{id}/edit', [CashTransactionController::class, 'editIn'])->name('cash.in.edit');
+        Route::get('/out/{id}/edit', [CashTransactionController::class, 'editOut'])->name('cash.out.edit');
 
         Route::get('/in/get-items', [KasMasukController::class, 'getCategoryItems'])->name('cash.in.getItems');
         Route::post('/in', [KasMasukController::class, 'store'])->name('cash.in.store');
@@ -108,11 +111,13 @@ Route::middleware('auth')->group(function () {
         Route::delete('/categories/{id}', [KategoriController::class, 'destroy'])->name('master.categories.destroy');
 
         Route::get('/accounts', [ChartOfAccountController::class, 'index'])->name('master.accounts');
+        Route::get('/accounts/create', [ChartOfAccountController::class, 'create'])->name('master.accounts.create');
         Route::post('/accounts', [ChartOfAccountController::class, 'store'])->name('master.accounts.store');
+        Route::get('/accounts/{account}/edit', [ChartOfAccountController::class, 'edit'])->name('master.accounts.edit');
+        Route::delete('/accounts/bulk-delete', [ChartOfAccountController::class, 'destroyBulk'])->name('master.accounts.destroyBulk');
         Route::put('/accounts/{account}', [ChartOfAccountController::class, 'update'])->name('master.accounts.update');
-        Route::delete('/accounts/{account}', [ChartOfAccountController::class, 'destroy'])->name('master.accounts.destroy');
+        Route::delete('/accounts/{id}', [ChartOfAccountController::class, 'destroy'])->name('master.accounts.destroy')->where('id', '[0-9]+');
         Route::patch('/accounts/{account}/toggle', [ChartOfAccountController::class, 'toggleStatus'])->name('master.accounts.toggle');
-        Route::delete('/accounts', [ChartOfAccountController::class, 'destroyBulk'])->name('master.accounts.destroyBulk');
 
         Route::get('/products/menu', [ProductController::class, 'menu'])->name('master.products.menu');
         Route::get('/products', [ProductController::class, 'index'])->name('master.products.index');
@@ -137,16 +142,24 @@ Route::middleware('auth')->group(function () {
         Route::get('/api/cash', [ArusKasController::class, 'apiCashReport'])->name('api.report.cash');
 
         Route::get('/income-statement', [IncomeStatementController::class, 'index'])->name('report.income-statement');
+        Route::get('/income-statement/print', [IncomeStatementController::class, 'print'])->name('report.income-statement.print');
         Route::get('/neraca', [NeracaController::class, 'index'])->name('report.neraca');
         Route::get('/neraca/export', [NeracaController::class, 'exportExcel'])->name('report.neraca.export');
 
         Route::get('/journal', [JurnalController::class, 'index'])->name('report.journal');
+        Route::get('/journal/print', [JurnalController::class, 'print'])->name('report.journal.print');
         Route::post('/journal/sync', [JurnalController::class, 'sync'])->name('report.journal.sync');
         Route::get('/journal/export', [JurnalController::class, 'exportExcel'])->name('report.journal.export');
         Route::get('/ledger', [BukuBesarController::class, 'index'])->name('report.ledger');
+        Route::get('/ledger/print', [BukuBesarController::class, 'print'])->name('report.ledger.print');
         Route::get('/ledger/export', [BukuBesarController::class, 'exportExcel'])->name('report.ledger.export');
         Route::get('/trial-balance', [NeracaSaldoController::class, 'index'])->name('report.trial-balance');
+        Route::get('/trial-balance/print', [NeracaSaldoController::class, 'print'])->name('report.trial-balance.print');
         Route::get('/trial-balance/export', [NeracaSaldoController::class, 'exportExcel'])->name('report.trial-balance.export');
+        Route::get('/neraca', [NeracaController::class, 'index'])->name('report.neraca');
+        Route::get('/neraca/print', [NeracaController::class, 'print'])->name('report.neraca.print');
+        Route::get('/neraca/export', [NeracaController::class, 'exportExcel'])->name('report.neraca.export');
+        Route::get('/cash-flow/print', [ArusKasController::class, 'printCashFlow'])->name('report.cash-flow.print');
     });
 
     Route::prefix('settings')->group(function () {

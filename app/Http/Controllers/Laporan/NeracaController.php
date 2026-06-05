@@ -128,6 +128,45 @@ class NeracaController extends Controller
         ];
     }
 
+    public function print(Request $request)
+    {
+        // Auto-sync before displaying
+        GeneralJournal::syncAll();
+
+        $endDateInput = $request->input('end_date');
+        $endDate = $endDateInput ? Carbon::parse($endDateInput)->endOfDay() : Carbon::now()->endOfDay();
+
+        // Assets
+        $assets = $this->getAccountBalances('asset', $endDate);
+        $totalAssets = $assets->sum('balance');
+
+        // Liabilities
+        $liabilities = $this->getAccountBalances('liability', $endDate);
+        $totalLiabilities = $liabilities->sum('balance');
+
+        // Equity
+        $equity = $this->getAccountBalances('equity', $endDate);
+        $totalEquityWithoutProfit = $equity->sum('balance');
+
+        // Laba Tahun Berjalan
+        $currentYear = $endDate->year;
+        $startOfYear = Carbon::create($currentYear, 1, 1)->startOfDay();
+
+        $profitData = $this->calculateProfit($startOfYear, $endDate);
+        $currentYearProfit = $profitData['netIncome'];
+
+        $totalEquity = $totalEquityWithoutProfit + $currentYearProfit;
+        $totalLiabilitiesAndEquity = $totalLiabilities + $totalEquity;
+
+        return view('report.neraca-print', compact(
+            'assets', 'totalAssets',
+            'liabilities', 'totalLiabilities',
+            'equity', 'totalEquityWithoutProfit',
+            'currentYearProfit', 'totalEquity',
+            'totalLiabilitiesAndEquity', 'endDate'
+        ));
+    }
+
     public function exportExcel(Request $request)
     {
         // Similar logic for CSV export

@@ -312,9 +312,13 @@
             btnView.onclick = (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                window.open(fileUrl, '_blank');
+                openViewer(fileUrl, file.name);
+                return false;
             };
-            btnDownload.onclick = (e) => e.stopPropagation();
+            btnDownload.onclick = (e) => {
+                e.stopPropagation();
+                return true;
+            };
             btnDownload.href = fileUrl;
             btnDownload.download = file.name;
             
@@ -358,4 +362,7 @@
         }
     });
 </script>
+
+@include('components.file-viewer')
+
 @endsection

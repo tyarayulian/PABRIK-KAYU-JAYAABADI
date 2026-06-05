@@ -593,6 +593,57 @@ class ArusKasController extends Controller
         }
     }
 
+    public function printCashFlow(Request $request)
+    {
+        $filterType = $request->input('filter_type', 'all');
+        $month = $request->input('month');
+        $year = $request->input('year', date('Y'));
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+
+        $cashAccountIds = ChartOfAccount::where('type', 'asset')
+            ->where(function ($q) {
+                $q->where('code', 'like', '11%')
+                    ->orWhere('name', 'like', '%Kas%')
+                    ->orWhere('name', 'like', '%Bank%');
+            })->pluck('id');
+
+        $queryIn = GeneralJournal::whereIn('account_id', $cashAccountIds);
+        $queryOut = GeneralJournal::whereIn('account_id', $cashAccountIds);
+
+        if ($filterType === 'per_bulan' && $month) {
+            $date = \Carbon\Carbon::parse($month);
+            $queryIn->whereYear('journal_date', $date->year)->whereMonth('journal_date', $date->month)->where('type', 'debit');
+            $queryOut->whereYear('journal_date', $date->year)->whereMonth('journal_date', $date->month)->where('type', 'credit');
+        } elseif ($filterType === 'per_tahun' && $year) {
+            $queryIn->whereYear('journal_date', $year)->where('type', 'debit');
+            $queryOut->whereYear('journal_date', $year)->where('type', 'credit');
+        } elseif ($filterType === 'custom' && $startDate && $endDate) {
+            $queryIn->whereBetween('journal_date', [$startDate, $endDate])->where('type', 'debit');
+            $queryOut->whereBetween('journal_date', [$startDate, $endDate])->where('type', 'credit');
+        }
+
+        $cashIn = $queryIn->get();
+        $cashOut = $queryOut->get();
+
+        $inByAccount = [];
+        foreach ($cashIn as $item) {
+            $accountName = $item->account ? $item->account->name : 'Penerimaan Kas';
+            $inByAccount[$accountName] = ($inByAccount[$accountName] ?? 0) + $item->amount;
+        }
+
+        $outByAccount = [];
+        foreach ($cashOut as $item) {
+            $accountName = $item->account ? $item->account->name : 'Pengeluaran Kas';
+            $outByAccount[$accountName] = ($outByAccount[$accountName] ?? 0) + $item->amount;
+        }
+
+        $totalIn = array_sum($inByAccount);
+        $totalOut = array_sum($outByAccount);
+
+        return view('report.cash_flow-print', compact('inByAccount', 'outByAccount', 'totalIn', 'totalOut'));
+    }
+
     public function destroyBulk(Request $request)
     {
         $ids = $request->input('ids', []);

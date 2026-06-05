@@ -4,6 +4,7 @@
 
 @section('styles')
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="{{ asset('css/print-report.css') }}?v={{ time() }}">
 <style>
     :root {
         --primary-navy: #1e2a78;
@@ -242,10 +243,130 @@
     .amount-in { color: #10b981; }
     .amount-out { color: #f43f5e; }
 
+    /* Additional print customizations beyond the standard print-report.css */
     @media print {
-        @page { size: A4; margin: 10mm; }
-        .header-section, .btn-navy, .btn-outline-navy, .sidebar { display: none !important; }
-        .table-section { box-shadow: none !important; border: 1.5px solid #000 !important; border-radius: 0 !important; }
+        @page {
+            size: A4 portrait;
+            margin: 15mm 10mm;
+        }
+
+        body {
+            background: white !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        /* Hide non-essential elements */
+        .stats-grid,
+        .filter-panel,
+        .btn-outline-navy,
+        .page-actions {
+            display: none !important;
+        }
+
+        .cashflow-container {
+            max-width: 100%;
+            padding: 0;
+        }
+
+        .report-card {
+            border: none;
+            box-shadow: none;
+            border-radius: 0;
+        }
+
+        /* Header */
+        .report-header {
+            padding: 0 0 8mm 0 !important;
+            margin-bottom: 5mm !important;
+            border-bottom: 2px solid #000 !important;
+        }
+
+        .report-header h1 {
+            font-size: 16pt !important;
+        }
+
+        /* Table */
+        .cashflow-table {
+            font-size: 9pt !important;
+        }
+
+        .cashflow-table th {
+            font-size: 8pt !important;
+            padding: 3mm 2mm !important;
+            background: #f5f5f5 !important;
+            border: 1px solid #000 !important;
+            color: #000 !important;
+            -webkit-print-color-adjust: exact !important;
+        }
+
+        .cashflow-table td {
+            padding: 2mm !important;
+            font-size: 9pt !important;
+            border: 1px solid #ddd !important;
+            color: #000 !important;
+        }
+
+        /* Section headers (Arus Masuk, Arus Keluar) */
+        .section-header {
+            background: #000 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            border-top: 2px solid #000 !important;
+        }
+        
+        .section-header td {
+            color: white !important;
+            font-weight: 800 !important;
+            padding: 3mm !important;
+            font-size: 10pt !important;
+        }
+
+        /* Subtotal rows */
+        .subtotal-row {
+            background: #f5f5f5 !important;
+            -webkit-print-color-adjust: exact !important;
+            font-weight: 700 !important;
+            border-top: 1px solid #000 !important;
+        }
+
+        /* Grand total (Kenaikan/Penurunan Bersih) */
+        .grand-total-row {
+            background: #000 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            border-top: 2px solid #000 !important;
+            border-bottom: 2px double #000 !important;
+        }
+        
+        .grand-total-row td {
+            color: white !important;
+            font-weight: 800 !important;
+            padding: 3mm !important;
+            font-size: 11pt !important;
+        }
+
+        /* Amount alignment */
+        .amount-cell {
+            font-family: 'Courier New', monospace !important;
+            text-align: right !important;
+            font-weight: 600 !important;
+        }
+
+        /* Page breaks */
+        .section-header {
+            page-break-after: avoid;
+        }
+
+        tr {
+            page-break-inside: avoid;
+        }
+
+        /* Remove colors */
+        .text-positive,
+        .text-negative {
+            color: #000 !important;
+        }
     }
 </style>
 @endsection
@@ -282,7 +403,7 @@
             <p class="report-subtitle">PABRIK KAYU JAYA ABADI • Ringkasan Mutasi Kas Periode Ini</p>
         </div>
         <div style="display: flex; gap: 12px;">
-            <button onclick="window.print()" class="btn-outline-navy">
+            <button type="button" onclick="window.print()" class="btn-outline-navy">
                 <i class="fas fa-print"></i> CETAK PDF
             </button>
             <a href="{{ route('report.cash-flow.export', request()->all()) }}" class="btn-navy">

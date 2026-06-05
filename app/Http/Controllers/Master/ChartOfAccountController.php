@@ -18,13 +18,18 @@ class ChartOfAccountController extends Controller
         return view('master.accounts', compact('accounts'));
     }
 
+    public function create()
+    {
+        return view('master.accounts.create');
+    }
+
     public function store(Request $request)
     {
         try {
             $validated = $request->validate([
                 'code' => 'required|unique:akun_coa,code',
                 'name' => 'required|string',
-                'type' => 'required|in:asset,liability,equity,revenue,expense',
+                'type' => 'required|in:asset,liability,equity,revenue,expense,cogs',
             ]);
 
             ChartOfAccount::create([
@@ -47,8 +52,14 @@ class ChartOfAccountController extends Controller
                     'errors' => $e->errors(),
                 ], 422);
             }
-            throw $e;
+            return back()->withErrors($e->errors())->withInput();
         }
+    }
+
+    public function edit($id)
+    {
+        $account = ChartOfAccount::findOrFail($id);
+        return view('master.accounts.edit', compact('account'));
     }
 
     public function update(Request $request, ChartOfAccount $account)
@@ -57,7 +68,7 @@ class ChartOfAccountController extends Controller
             $validated = $request->validate([
                 'code' => 'required|unique:akun_coa,code,'.$account->id,
                 'name' => 'required|string',
-                'type' => 'required|in:asset,liability,equity,revenue,expense',
+                'type' => 'required|in:asset,liability,equity,revenue,expense,cogs',
             ]);
 
             $account->update([
@@ -79,12 +90,14 @@ class ChartOfAccountController extends Controller
                     'errors' => $e->errors(),
                 ], 422);
             }
-            throw $e;
+            return back()->withErrors($e->errors())->withInput();
         }
     }
 
-    public function destroy(ChartOfAccount $account)
+    public function destroy($id)
     {
+        $account = ChartOfAccount::findOrFail($id);
+        
         if ($this->isAccountInUse($account->id)) {
             if (request()->ajax()) {
                 return response()->json(['success' => false, 'message' => 'Akun tidak dapat dihapus karena sudah memiliki transaksi']);
@@ -121,7 +134,14 @@ class ChartOfAccountController extends Controller
 
     public function destroyBulk(Request $request)
     {
+        // Support both body and query parameter
         $ids = $request->input('ids', []);
+        
+        // If ids is a string (from query param), convert to array
+        if (is_string($ids)) {
+            $ids = explode(',', $ids);
+            $ids = array_filter($ids); // Remove empty values
+        }
 
         if (empty($ids)) {
             if ($request->ajax()) {
@@ -156,7 +176,7 @@ class ChartOfAccountController extends Controller
             } catch (\Exception $e) {
                 \DB::rollBack();
                 if ($request->ajax()) {
-                    return response()->json(['success' => false, 'message' => 'Gagal menghapus beberapa akun']);
+                    return response()->json(['success' => false, 'message' => 'Gagal menghapus beberapa akun: ' . $e->getMessage()]);
                 }
 
                 return redirect()->route('master.accounts')->with('error', 'Gagal menghapus beberapa akun');
@@ -169,17 +189,17 @@ class ChartOfAccountController extends Controller
                 $msg = count($deletableIds).' akun berhasil dihapus, namun '.$msg;
             }
             if ($request->ajax()) {
-                return response()->json(['success' => false, 'message' => $msg]);
+                return response()->json(['success' => true, 'message' => $msg]);
             }
 
             return redirect()->route('master.accounts')->with('error', $msg);
         }
 
         if ($request->ajax()) {
-            return response()->json(['success' => true, 'message' => count($ids).' akun berhasil dihapus']);
+            return response()->json(['success' => true, 'message' => count($deletableIds).' akun berhasil dihapus']);
         }
 
-        return redirect()->route('master.accounts')->with('success', count($ids).' akun berhasil dihapus');
+        return redirect()->route('master.accounts')->with('success', count($deletableIds).' akun berhasil dihapus');
     }
 
     public function toggleStatus(ChartOfAccount $account)
@@ -196,7 +216,24 @@ class ChartOfAccountController extends Controller
 
     private function isAccountInUse($id)
     {
-        // Account is in use only if it has journal entries
-        return GeneralJournal::where('account_id', $id)->exists();
+        // Cek journal entries
+        if (GeneralJournal::where('account_id', $id)->exists()) {
+            return true;
+        }
+
+        // Cek produk - inventory, hpp, atau sales account
+        if (\App\Models\Product::where('inventory_account_id', $id)
+            ->orWhere('hpp_account_id', $id)
+            ->orWhere('sales_account_id', $id)
+            ->exists()) {
+            return true;
+        }
+
+        // Cek kategori
+        if (\App\Models\Category::where('account_id', $id)->exists()) {
+            return true;
+        }
+
+        return false;
     }
 }

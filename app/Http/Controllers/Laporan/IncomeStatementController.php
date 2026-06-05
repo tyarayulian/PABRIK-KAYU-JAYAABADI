@@ -62,6 +62,55 @@ class IncomeStatementController extends Controller
         ]));
     }
 
+    public function print()
+    {
+        // Auto-sync before displaying
+        GeneralJournal::syncAll();
+        
+        $filterType = request('filter_type', 'per_bulan');
+        $monthInput = request('month');
+        $yearInput = request('year');
+        $startDateInput = request('start_date');
+        $endDateInput = request('end_date');
+
+        $month = null;
+        $year = $yearInput ?: date('Y');
+        $startDate = null;
+        $endDate = null;
+
+        if ($filterType === 'per_bulan') {
+            if ($monthInput) {
+                $date = Carbon::parse($monthInput);
+                $month = $date->month;
+                $year = $date->year;
+            } else {
+                $month = date('n');
+                $year = date('Y');
+            }
+        } elseif ($filterType === 'per_tahun') {
+            $year = $yearInput ?: date('Y');
+        } elseif ($filterType === 'custom') {
+            if ($startDateInput) {
+                $startDate = Carbon::parse($startDateInput)->startOfDay();
+            }
+            if ($endDateInput) {
+                $endDate = Carbon::parse($endDateInput)->endOfDay();
+            }
+        }
+
+        $data = $this->calculateIncomeStatement($month, $year, $startDate, $endDate);
+
+        return view('report.income-statement-print', array_merge($data, [
+            'month' => $month,
+            'year' => $year,
+            'filterType' => $filterType,
+            'startDate' => $startDate,
+            'endDate' => $endDate,
+            'monthInput' => $monthInput,
+            'yearInput' => $yearInput,
+        ]));
+    }
+
     private function exportCSV($data, $filterType, $month, $year, $startDate, $endDate)
     {
         $fileName = 'Laporan_Laba_Rugi_'.date('Ymd_His').'.csv';

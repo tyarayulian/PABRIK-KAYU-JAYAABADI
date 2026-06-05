@@ -6,6 +6,7 @@
 @section('styles')
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link rel="stylesheet" href="{{ asset('css/modal.css') }}?v={{ time() }}">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <style>
     * { font-family: 'Plus Jakarta Sans', sans-serif; }
     .main-content { background-color: transparent !important; box-shadow: none !important; border: none !important; padding: 0 !important; }
@@ -145,12 +146,27 @@
     .mono { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: 11px; }
     
     .btn-action-circle {
-        width: 36px; height: 36px; border-radius: 12px;
-        display: flex; align-items: center; justify-content: center;
-        border: 1px solid #e2e8f0; background: #fff; color: #1e293b;
-        cursor: pointer; transition: all 0.2s; text-decoration: none;
+        background: #f8fafc;
+        color: #1e2a78;
+        border: 1px solid #e2e8f0;
+        padding: 0;
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
     }
-    .btn-action-circle:hover { background: #f8fafc; transform: scale(1.05); }
+    
+    .btn-action-circle:hover {
+        background: #f1f5f9;
+        color: #1e2a78;
+        border-color: #1e2a78;
+    }
 
     .detail-row { background-color: #fcfdfe; display: none; }
     .detail-container { padding: 30px 40px; border-left: 5px solid #1e2a78; background: #f9fbff; }
@@ -623,11 +639,13 @@
                                                     }
                                                 @endphp
 
-                                                <a href="{{ $editUrl }}" class="btn-action-circle" style="color: #1e2a78; background: #f0f4ff; border: none;" title="Edit">
+                                                <a href="{{ $editUrl }}" class="btn-action-circle" title="Edit Stok">
                                                     <i class="fas fa-edit"></i>
                                                 </a>
 
-                                                <button type="button" class="btn-action-circle" style="color: #f43f5e; background: #fff1f2; border: none;" 
+                                                <button type="button" class="btn-action-circle" title="Hapus Riwayat" style="background: #fff1f2; color: #f43f5e; border-color: #ffe4e6;" 
+                                                        onmouseover="this.style.background='#ffe4e6'; this.style.borderColor='#fecdd3';" 
+                                                        onmouseout="this.style.background='#fff1f2'; this.style.borderColor='#ffe4e6';"
                                                         onclick="confirmDeleteHistory('{{ $deleteUrl }}', '{{ $history->type }}')">
                                                     <i class="fas fa-trash"></i>
                                                 </button>
@@ -796,30 +814,69 @@
     function confirmDeleteHistory(url, type) {
         let title = 'Hapus Riwayat?';
         let text = "Data stok akan terpengaruh oleh penghapusan ini!";
+        let itemName = 'riwayat stok';
         
         if (type === 'initial') {
             title = 'Hapus Produk?';
             text = "Seluruh data produk dan riwayatnya akan dihapus permanen!";
+            itemName = 'produk';
         } else if (type === 'sale') {
             title = 'Hapus Transaksi Penjualan?';
             text = "Data kas masuk dan stok akan dikembalikan!";
+            itemName = 'transaksi penjualan';
         }
 
-        Swal.fire({
-            title: title,
-            text: text,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#f43f5e',
-            cancelButtonColor: '#64748b',
-            confirmButtonText: 'Ya, Hapus!',
-            cancelButtonText: 'Batal'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                const form = document.getElementById('delete-history-form');
-                form.action = url;
-                form.submit();
-            }
+        // Use Modal.delete instead of Swal
+        Modal.delete(itemName, function() {
+            // Create FormData with POST + _method=DELETE
+            const formData = new FormData();
+            formData.append('_token', '{{ csrf_token() }}');
+            formData.append('_method', 'DELETE');
+            
+            console.log('Deleting:', url);
+            
+            fetch(url, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => {
+                console.log('Delete response status:', response.status);
+                if (!response.ok) {
+                    return response.json().then(data => {
+                        throw new Error(data.message || 'Gagal menghapus');
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Delete success:', data);
+                if (data.success) {
+                    if (typeof Toast !== 'undefined') {
+                        Toast.success(data.message || 'Berhasil dihapus');
+                    } else {
+                        alert(data.message || 'Berhasil dihapus');
+                    }
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    if (typeof Toast !== 'undefined') {
+                        Toast.error(data.message);
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Delete error:', error);
+                if (typeof Toast !== 'undefined') {
+                    Toast.error(error.message || 'Terjadi kesalahan saat menghapus');
+                } else {
+                    alert('Error: ' + (error.message || 'Terjadi kesalahan saat menghapus'));
+                }
+            });
         });
     }
 </script>

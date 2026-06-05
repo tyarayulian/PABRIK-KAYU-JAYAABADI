@@ -192,9 +192,38 @@ class ProductController extends Controller
 
     public function destroy(Product $product)
     {
+        // Check if product is used in any transactions
+        $usedInKasMasuk = \App\Models\KasMasuk::where('product_id', $product->id)->exists();
+        $usedInKasKeluar = \App\Models\KasKeluar::where('product_id', $product->id)->exists();
+        $usedInSalesReturn = \App\Models\SalesReturn::where('product_id', $product->id)->exists();
+        
+        if ($usedInKasMasuk || $usedInKasKeluar || $usedInSalesReturn) {
+            if (request()->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Produk tidak dapat dihapus karena masih digunakan dalam transaksi'
+                ], 400);
+            }
+            
+            $wood = $product->wood_type;
+            $cat = $product->product_category;
+            
+            return redirect()->route('master.products.index', [
+                'wood' => \Str::slug($wood ?: 'lain-lain'),
+                'cat' => \Str::slug(($wood ?: 'lain-lain') . '-' . ($cat ?: 'umum')),
+            ])->with('error', 'Produk tidak dapat dihapus karena masih digunakan dalam transaksi');
+        }
+        
         $wood = $product->wood_type;
         $cat = $product->product_category;
         $product->delete();
+        
+        if (request()->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Produk berhasil dihapus'
+            ]);
+        }
         
         return redirect()->route('master.products.index', [
             'wood' => \Str::slug($wood ?: 'lain-lain'),
@@ -286,17 +315,34 @@ class ProductController extends Controller
     {
         $stock = ProductStock::findOrFail($id);
         $product = $stock->product;
+        
         \DB::beginTransaction();
         try {
             $stock->delete();
             $product->syncStock();
             \DB::commit();
+            
+            if (request()->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'History stok berhasil dihapus'
+                ]);
+            }
+            
             return redirect()->route('master.products.index', [
                 'wood' => \Str::slug($product->wood_type ?: 'lain-lain'),
                 'cat' => \Str::slug(($product->wood_type ?: 'lain-lain') . '-' . ($product->product_category ?: 'umum')),
             ])->with('success', 'History stok berhasil dihapus');
         } catch (\Exception $e) {
             \DB::rollBack();
+            
+            if (request()->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal menghapus stok: ' . $e->getMessage()
+                ], 500);
+            }
+            
             return back()->with('error', 'Gagal menghapus stok: ' . $e->getMessage());
         }
     }

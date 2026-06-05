@@ -5,6 +5,7 @@
 
 @section('styles')
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="{{ asset('css/print-report.css') }}?v={{ time() }}">
 <style>
     * {
         font-family: 'Plus Jakarta Sans', sans-serif;
@@ -205,11 +206,114 @@
         background: #151d54;
     }
 
+    /* Additional print customizations beyond the standard print-report.css */
     @media print {
-        .filter-container, .page-header, .sidebar, .top-header { display: none !important; }
-        .report-section { border: none; box-shadow: none; }
-        .report-content { padding: 0; }
-        .statement-row.summary-bar { -webkit-print-color-adjust: exact; background: #f3f4f6 !important; }
+        @page {
+            size: A4 portrait;
+            margin: 15mm 10mm;
+        }
+
+        body {
+            background: white !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        /* Hide filters and buttons */
+        .filter-container {
+            display: none !important;
+        }
+
+        .report-section {
+            border: none;
+            box-shadow: none;
+            border-radius: 0;
+        }
+
+        /* Header */
+        .report-header-centered {
+            padding: 0 0 8mm 0 !important;
+            margin-bottom: 5mm !important;
+            border-bottom: 2px solid #000 !important;
+        }
+
+        .report-header-centered h1 {
+            font-size: 16pt !important;
+        }
+
+        /* Content padding */
+        .report-content {
+            padding: 0 !important;
+        }
+
+        /* Table */
+        .statement-table {
+            font-size: 10pt;
+        }
+
+        .statement-table th {
+            font-size: 9pt !important;
+            padding: 3mm 0 !important;
+            border-top: 2px solid #000 !important;
+            border-bottom: 1px solid #000 !important;
+            color: #000 !important;
+        }
+
+        .statement-row.main-category td {
+            font-size: 10pt !important;
+            font-weight: 700 !important;
+            padding: 4mm 0 2mm 0 !important;
+            color: #000 !important;
+        }
+
+        .statement-row.item td {
+            font-size: 9pt !important;
+            padding: 2mm 0 2mm 8mm !important;
+            color: #000 !important;
+        }
+
+        .statement-row.summary-bar {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            background: #f3f4f6 !important;
+            padding: 3mm 3mm !important;
+        }
+
+        .statement-row.summary-bar td {
+            font-size: 11pt !important;
+            font-weight: 700 !important;
+            padding: 3mm !important;
+        }
+
+        /* Grand total dengan background hitam */
+        .statement-row.summary-bar[style*="background: #1e2a78"] {
+            background: #000 !important;
+            color: #fff !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
+        .statement-row.summary-bar[style*="background: #1e2a78"] td {
+            color: #fff !important;
+            font-size: 12pt !important;
+            font-weight: 800 !important;
+        }
+
+        /* Amount alignment */
+        .amount-cell {
+            font-family: 'Courier New', monospace !important;
+            text-align: right !important;
+            font-weight: 600 !important;
+        }
+
+        /* Page break control */
+        .statement-row {
+            page-break-inside: avoid;
+        }
+
+        .statement-row.main-category {
+            page-break-after: avoid;
+        }
     }
 
     .empty-state {
@@ -225,22 +329,7 @@
         color: #e2e8f0;
     }
 
-    .print-header {
-        display: none;
-    }
 
-    @media print {
-        .sidebar, .top-header, .filter-row, .btn-print, .btn-export, .report-title-section {
-            display: none !important;
-        }
-        .main-content { margin: 0 !important; padding: 0 !important; }
-        .report-section { border: none; box-shadow: none; border-radius: 0; }
-        .statement-row.grand-total { background: #1e2a78 !important; color: #fff !important; -webkit-print-color-adjust: exact; }
-        .amount.grand { color: #fff !important; }
-        .print-header { display: block; text-align: center; margin-bottom: 40px; border-bottom: 2px solid #1e2a78; padding-bottom: 20px; }
-        .print-header h1 { font-size: 28px; margin: 0; font-weight: 900; color: #1e2a78; }
-        .print-header p { font-size: 14px; margin: 5px 0; color: #64748b; }
-    }
 </style>
 @endsection
 
@@ -269,7 +358,7 @@
                 </div>
             </form>
             <div style="display: flex; gap: 8px; margin-left: 12px;">
-                <button class="btn-outline" onclick="window.print()" style="height: 36px; padding: 0 16px; display: flex; align-items: center; gap: 6px;">
+                <button type="button" onclick="window.print()" class="btn-outline" style="height: 36px; padding: 0 16px; display: flex; align-items: center; gap: 6px;">
                     <i class="fas fa-print"></i> PDF
                 </button>
                 <a href="{{ route('report.income-statement', array_merge(request()->all(), ['export' => 'excel'])) }}" class="btn-outline" style="height: 36px; padding: 0 16px; display: flex; align-items: center; gap: 6px;">

@@ -73,6 +73,39 @@
         ::-webkit-scrollbar-thumb { background: #e0e0e0; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #d0d0d0; }
 
+        /* Print Styles - Hide Sidebar and Navigation */
+        @media print {
+            .container-wrapper {
+                padding: 0 !important;
+            }
+            
+            .sidebar,
+            .sidebar-container {
+                display: none !important;
+            }
+            
+            .main-content {
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            
+            .toast-container,
+            button:not(.print-only),
+            .btn,
+            .btn-primary,
+            .btn-outline,
+            .btn-outline-navy,
+            .actions-column,
+            input[type="text"],
+            input[type="date"],
+            input[type="month"],
+            select,
+            .filter-section,
+            .page-header-actions {
+                display: none !important;
+            }
+        }
+
         @yield('styles')
         
         <style>
@@ -170,6 +203,9 @@
     </div>
 
     <script src="{{ asset('js/auto-refresh.js') }}"></script>
+    <script src="{{ asset('js/toast.js') }}?v={{ time() }}"></script>
+    <script src="{{ asset('js/modal.js') }}?v={{ time() }}"></script>
+    <script src="{{ asset('js/swal-replacement.js') }}?v={{ time() }}"></script>
     <script>
         if (typeof feather !== 'undefined') {
             feather.replace();
@@ -183,48 +219,19 @@
             }).format(number).replace('Rp', 'Rp ').trim();
         }
 
+        // Use Toast component for all notifications
         function showNotification(message, type = 'success') {
-            const container = document.getElementById('toastContainer');
-            if (!container) return;
-
-            const toast = document.createElement('div');
-            toast.className = `toast-item ${type}`;
-            
-            const icons = {
-                success: 'check-circle',
-                error: 'alert-circle',
-                info: 'info'
-            };
-            const icon = icons[type] || 'info';
-
-            toast.innerHTML = `
-                <div class="toast-icon">
-                    <i data-feather="${icon}"></i>
-                </div>
-                <div class="toast-content">
-                    <div class="toast-title">${type === 'success' ? 'Berhasil' : (type === 'error' ? 'Gagal' : 'Informasi')}</div>
-                    <div class="toast-message">${message}</div>
-                </div>
-                <div class="toast-close" onclick="this.parentElement.remove()">
-                    <i data-feather="x"></i>
-                </div>
-            `;
-
-            container.appendChild(toast);
-            
-            // Trigger animation
-            setTimeout(() => {
-                toast.classList.add('show');
-                if (typeof feather !== 'undefined') {
-                    feather.replace();
+            if (typeof Toast !== 'undefined') {
+                if (type === 'success') {
+                    Toast.success(message);
+                } else if (type === 'error') {
+                    Toast.error(message);
+                } else if (type === 'warning') {
+                    Toast.warning(message);
+                } else if (type === 'info') {
+                    Toast.info(message);
                 }
-            }, 10);
-
-            // Auto hide
-            setTimeout(() => {
-                toast.classList.remove('show');
-                setTimeout(() => toast.remove(), 500);
-            }, 5000);
+            }
         }
 
         document.addEventListener('DOMContentLoaded', function() {
@@ -232,7 +239,13 @@
             if (flash) {
                 const type = flash.getAttribute('data-type');
                 const message = flash.getAttribute('data-message');
-                if (message) showNotification(message, type);
+                if (message) {
+                    if (type === 'success') {
+                        Toast.success(message);
+                    } else if (type === 'error') {
+                        Toast.error(message);
+                    }
+                }
             }
 
             // Restore Sidebar Scroll Position

@@ -199,24 +199,26 @@
     }
 
     .action-btn {
+        background: #f8fafc;
+        color: #1e2a78;
+        border: 1px solid #e2e8f0;
+        padding: 0;
         width: 34px;
         height: 34px;
         border-radius: 10px;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.2s;
         display: flex;
         align-items: center;
         justify-content: center;
-        border: 1px solid #e2e8f0;
-        background: #fff;
-        color: #1e293b;
-        cursor: pointer;
-        transition: all 0.2s;
         text-decoration: none;
-        font-size: 14px;
     }
 
     .action-btn:hover {
         background: #f1f5f9;
-        border-color: #cbd5e1;
+        color: #1e2a78;
+        border-color: #1e2a78;
     }
 
     .btn-delete {
@@ -227,6 +229,7 @@
 
     .btn-delete:hover {
         background: #ffe4e6;
+        color: #f43f5e;
         border-color: #fecdd3;
     }
 
@@ -371,60 +374,62 @@
     function deleteCategory(id) {
         const categoryElement = event.target.closest('tr').querySelector('td:nth-child(2)').textContent.trim();
         Modal.delete(`kategori "${categoryElement}"`, function() {
+            const formData = new FormData();
+            formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
+            formData.append('_method', 'DELETE');
+
             fetch(`/master/categories/${id}`, {
-                method: 'DELETE',
+                method: 'POST',
                 headers: {
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                    'Accept': 'application/json'
-                }
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: formData
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    location.reload();
+                    Toast.success(data.message || 'Kategori berhasil dihapus');
+                    setTimeout(() => location.reload(), 800);
                 } else {
-                    alert(data.message);
+                    Toast.error(data.message || 'Gagal menghapus kategori');
                 }
-            });
+            })
+            .catch(() => Toast.error('Terjadi kesalahan, coba lagi'));
         });
     }
 
     function bulkDelete() {
         const selectedIds = Array.from(document.querySelectorAll('.category-checkbox:checked')).map(cb => cb.value);
         Modal.delete(`${selectedIds.length} kategori terpilih`, function() {
+            const formData = new FormData();
+            formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
+            formData.append('_method', 'DELETE');
+            selectedIds.forEach(id => formData.append('ids[]', id));
+
             fetch('{{ route("master.categories.destroyBulk") }}', {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({ ids: selectedIds })
+                method: 'POST',
+                headers: { 'Accept': 'application/json' },
+                body: formData
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    location.reload();
+                    Toast.success(data.message || 'Kategori berhasil dihapus');
+                    setTimeout(() => location.reload(), 800);
                 } else {
-                    alert(data.message);
+                    Toast.error(data.message || 'Gagal menghapus kategori');
                 }
-            });
+            })
+            .catch(() => Toast.error('Terjadi kesalahan, coba lagi'));
         });
     }
 </script>
 
-<script src="{{ asset('js/modal.js') }}?v={{ time() }}"></script>
 
 @if(session('success'))
 <script>
-    // Show success notification
-    setTimeout(function() {
-        const notification = document.createElement('div');
-        notification.style.cssText = 'position:fixed;top:20px;right:20px;background:#1e2a78;color:white;padding:16px 24px;border-radius:12px;z-index:10000;box-shadow:0 10px 30px rgba(30,42,120,0.3);font-weight:600;';
-        notification.textContent = '✓ {{ session("success") }}';
-        document.body.appendChild(notification);
-        setTimeout(() => notification.remove(), 3000);
-    }, 100);
+    Toast.success('{{ session("success") }}');
 </script>
 @endif
 @endsection

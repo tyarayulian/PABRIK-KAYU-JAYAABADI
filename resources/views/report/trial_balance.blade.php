@@ -5,6 +5,7 @@
 
 @section('styles')
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="{{ asset('css/print-report.css') }}?v={{ time() }}">
 <style>
     * {
         font-family: 'Plus Jakarta Sans', sans-serif;
@@ -182,10 +183,111 @@
         font-weight: 700;
     }
 
+    /* Additional print customizations beyond the standard print-report.css */
     @media print {
-        .filter-row, .sidebar, .btn-outline { display: none !important; }
-        .table-section { border: none; box-shadow: none; border-radius: 0; }
-        .category-header-row td { background: #ffffff !important; color: #111827 !important; -webkit-print-color-adjust: exact; border-bottom: 1px solid #f1f5f9 !important; }
+        @page {
+            size: A4 portrait;
+            margin: 15mm 10mm;
+        }
+
+        body {
+            background: white !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        /* Hide filters */
+        .filter-row {
+            display: none !important;
+        }
+
+        .trial-container {
+            max-width: 100%;
+            padding: 0;
+        }
+
+        .table-section {
+            border: none;
+            box-shadow: none;
+            border-radius: 0;
+        }
+
+        /* Header */
+        .table-section > div:first-child {
+            padding: 0 0 8mm 0 !important;
+            margin-bottom: 5mm !important;
+            border-bottom: 2px solid #000 !important;
+        }
+
+        .table-section h1 {
+            font-size: 16pt !important;
+        }
+
+        /* Table */
+        .trial-table {
+            font-size: 9pt !important;
+        }
+
+        .trial-table th {
+            font-size: 8pt !important;
+            padding: 3mm 2mm !important;
+            background: #f5f5f5 !important;
+            border: 1px solid #000 !important;
+            color: #000 !important;
+            -webkit-print-color-adjust: exact !important;
+        }
+
+        .trial-table td {
+            padding: 2mm !important;
+            font-size: 9pt !important;
+            border: 1px solid #ddd !important;
+            color: #000 !important;
+        }
+
+        /* Category headers */
+        .category-header-row td { 
+            background: #e5e7eb !important; 
+            color: #000 !important; 
+            -webkit-print-color-adjust: exact !important; 
+            border-bottom: 1pt solid #000 !important;
+            border-top: 1pt solid #000 !important;
+            font-weight: 800 !important;
+            padding: 2mm !important;
+        }
+
+        /* Amount alignment */
+        .amount {
+            font-family: 'Courier New', monospace !important;
+            text-align: right !important;
+            font-weight: 600 !important;
+        }
+
+        /* Total row */
+        .total-row td {
+            font-weight: 800 !important;
+            border-top: 2px solid #000 !important;
+            border-bottom: 2px double #000 !important;
+            background: #f5f5f5 !important;
+            -webkit-print-color-adjust: exact !important;
+        }
+
+        /* Status bar */
+        .status-bar {
+            padding: 5mm 0 !important;
+            margin-top: 5mm !important;
+            border-top: 2px solid #000 !important;
+        }
+
+        /* Remove colors */
+        .text-debit,
+        .text-credit {
+            color: #000 !important;
+        }
+
+        /* Page breaks */
+        tr {
+            page-break-inside: avoid;
+        }
     }
 </style>
 @endsection

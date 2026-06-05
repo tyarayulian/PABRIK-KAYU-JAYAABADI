@@ -4,6 +4,7 @@
 
 @section('styles')
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="{{ asset('css/print-report.css') }}?v={{ time() }}">
 <style>
     * {
         font-family: 'Plus Jakarta Sans', sans-serif;
@@ -113,6 +114,149 @@
     .status-bar {
         padding: 20px 24px; background: #ffffff; border-top: 1px solid #f1f5f9; 
         display: flex; justify-content: space-between; align-items: center;
+    }
+
+    /* ========================================
+       PRINT STYLES - FORMAT JURNAL UMUM
+       ======================================== */
+    @media print {
+        @page {
+            size: A4 landscape;
+            margin: 15mm 10mm;
+        }
+
+        * {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        body {
+            background: white !important;
+            overflow: hidden !important;
+        }
+
+        /* Hide non-essential elements */
+        .filter-row,
+        .pagination-container,
+        .btn-outline,
+        .btn-filter,
+        .btn-reset-filter {
+            display: none !important;
+        }
+
+        .journal-container {
+            max-width: 100%;
+            padding: 0;
+            margin: 0;
+        }
+
+        .table-section {
+            border: none;
+            border-radius: 0;
+            box-shadow: none;
+            page-break-inside: avoid;
+        }
+
+        /* Header Laporan */
+        .table-section > div:first-child {
+            padding: 0 0 10mm 0 !important;
+            margin-bottom: 5mm !important;
+            border-bottom: 2px solid #000 !important;
+        }
+
+        .table-section h1 {
+            font-size: 16pt !important;
+            margin-bottom: 2mm !important;
+        }
+
+        /* Table Styling with clear borders */
+        .journal-table {
+            width: 100%;
+            border-collapse: collapse !important;
+            font-size: 9pt;
+        }
+
+        .journal-table thead {
+            border-bottom: 2px solid #000;
+        }
+
+        .journal-table th {
+            padding: 3mm 2mm !important;
+            font-size: 8pt !important;
+            font-weight: 700 !important;
+            color: #000 !important;
+            background: #f0f0f0 !important;
+            border: 1px solid #000 !important;
+        }
+
+        .journal-table tbody tr {
+            border-bottom: 1px solid #666 !important;
+        }
+
+        .journal-table td {
+            padding: 2mm !important;
+            font-size: 9pt !important;
+            border-left: 1px solid #666 !important;
+            border-right: 1px solid #666 !important;
+            color: #000 !important;
+        }
+
+        /* First and last cell borders */
+        .journal-table td:first-child {
+            border-left: 1px solid #000 !important;
+        }
+
+        .journal-table td:last-child {
+            border-right: 1px solid #000 !important;
+        }
+
+        /* Amounts in monospace for alignment */
+        .amount {
+            font-family: 'Courier New', monospace !important;
+            font-size: 9pt !important;
+            font-weight: 600 !important;
+            color: #000 !important;
+        }
+
+        /* Status Bar - Show totals */
+        .status-bar {
+            padding: 5mm 0 !important;
+            margin-top: 5mm !important;
+            border-top: 2px solid #000 !important;
+            background: white !important;
+        }
+
+        .status-bar .amount-value {
+            font-family: 'Courier New', monospace !important;
+            font-size: 11pt !important;
+            color: #000 !important;
+            font-weight: 700 !important;
+        }
+
+        /* Remove colors in print */
+        .text-debit,
+        .text-credit,
+        .text-null {
+            color: #000 !important;
+        }
+
+        /* Page breaks */
+        tr {
+            page-break-inside: avoid;
+        }
+
+        thead {
+            display: table-header-group;
+        }
+
+        tfoot {
+            display: table-footer-group;
+        }
+
+        /* Hide scrollbar */
+        ::-webkit-scrollbar {
+            display: none !important;
+        }
     }
 </style>
 @endsection

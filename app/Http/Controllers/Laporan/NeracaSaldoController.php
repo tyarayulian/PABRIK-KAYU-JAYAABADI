@@ -176,6 +176,119 @@ class NeracaSaldoController extends Controller
         ));
     }
 
+    public function print(Request $request)
+    {
+        // Auto-sync before displaying
+        GeneralJournal::syncAll();
+
+        $filterType = $request->input('filter_type', 'per_bulan');
+        $yearInput = $request->input('year');
+        $monthInput = $request->input('month');
+        $startDateInput = $request->input('start_date');
+        $endDateInput = $request->input('end_date');
+
+        $year = $yearInput ?: Carbon::now()->year;
+        $month = $monthInput ?: Carbon::now()->month;
+        $startDate = null;
+        $endDate = null;
+
+        if ($filterType === 'per_bulan') {
+            if ($monthInput) {
+                $date = Carbon::parse($monthInput);
+                $month = $date->month;
+                $year = $date->year;
+            } else {
+                $month = Carbon::now()->month;
+                $year = Carbon::now()->year;
+            }
+        }
+
+        $query = GeneralJournal::with('account');
+
+        if ($filterType === 'per_bulan') {
+            $query->whereYear('journal_date', $year)->whereMonth('journal_date', $month);
+        } elseif ($filterType === 'per_tahun') {
+            $query->whereYear('journal_date', $year);
+        } elseif ($filterType === 'custom' && $startDateInput && $endDateInput) {
+            $startDate = Carbon::parse($startDateInput)->startOfDay();
+            $endDate = Carbon::parse($endDateInput)->endOfDay();
+            $query->whereBetween('journal_date', [$startDate, $endDate]);
+        }
+
+        $journals = $query->get();
+
+        $accounts = [];
+        foreach ($journals as $journal) {
+            $accountId = $journal->account_id;
+            if (!isset($accounts[$accountId])) {
+                $accounts[$accountId] = [
+                    'code' => $journal->account->code,
+                    'name' => $journal->account->name,
+                    'type' => $journal->account->type,
+                    'debit' => 0,
+                    'credit' => 0,
+                ];
+            }
+
+            if ($journal->type === 'debit') {
+                $accounts[$accountId]['debit'] += $journal->amount;
+            } else {
+                $accounts[$accountId]['credit'] += $journal->amount;
+            }
+        }
+
+        $trialBalance = [];
+        $categoryOrder = ['asset', 'liability', 'equity', 'revenue', 'expense', 'cogs'];
+        foreach ($categoryOrder as $category) {
+            $trialBalance[$category] = [];
+        }
+
+        foreach ($accounts as $account) {
+            $debit = $account['debit'];
+            $credit = $account['credit'];
+
+            if (in_array($account['type'], ['asset', 'expense', 'cogs'])) {
+                $balance = $debit - $credit;
+                if ($balance > 0) {
+                    $finalDebit = $balance;
+                    $finalCredit = 0;
+                } else {
+                    $finalDebit = 0;
+                    $finalCredit = abs($balance);
+                }
+            } else {
+                $balance = $credit - $debit;
+                if ($balance > 0) {
+                    $finalDebit = 0;
+                    $finalCredit = $balance;
+                } else {
+                    $finalDebit = abs($balance);
+                    $finalCredit = 0;
+                }
+            }
+
+            if ($finalDebit != 0 || $finalCredit != 0) {
+                $trialBalance[$account['type']][] = [
+                    'code' => $account['code'],
+                    'name' => $account['name'],
+                    'debit' => $finalDebit,
+                    'credit' => $finalCredit,
+                ];
+            }
+        }
+
+        $totalDebit = 0;
+        $totalCredit = 0;
+        foreach ($trialBalance as $accounts) {
+            foreach ($accounts as $account) {
+                $totalDebit += $account['debit'];
+                $totalCredit += $account['credit'];
+            }
+        }
+
+        return view('report.trial_balance-print', compact('trialBalance', 'totalDebit', 'totalCredit', 'filterType', 'year', 'month', 'startDate', 'endDate'));
+    }
+
     public function exportExcel(Request $request)
     {
         // Auto-sync before exporting

@@ -6,6 +6,7 @@
 @section('styles')
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link rel="stylesheet" href="{{ asset('css/modal.css') }}?v={{ time() }}">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <style>
     * {
         font-family: 'Plus Jakarta Sans', sans-serif;
@@ -247,29 +248,37 @@
     }
 
     .action-btn {
+        background: #f8fafc;
+        color: #1e2a78;
+        border: 1px solid #e2e8f0;
+        padding: 0;
         width: 34px;
         height: 34px;
         border-radius: 10px;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.2s;
         display: flex;
         align-items: center;
         justify-content: center;
-        border: 1px solid #e2e8f0;
-        background: #fff;
-        color: #1e293b;
-        cursor: pointer;
-        transition: all 0.2s;
         text-decoration: none;
-        font-size: 14px;
     }
 
     .action-btn:hover {
         background: #f1f5f9;
-        border-color: #cbd5e1;
+        color: #1e2a78;
+        border-color: #1e2a78;
+    }
+
+    .action-btn.delete {
+        background: #fff1f2;
+        color: #f43f5e;
+        border: 1px solid #ffe4e6;
     }
 
     .action-btn.delete:hover {
-        background: #fff1f2;
-        color: #dc2626;
+        background: #ffe4e6;
+        color: #f43f5e;
         border-color: #fecdd3;
     }
 
@@ -409,9 +418,9 @@
             <p>Menampilkan total <strong>{{ $accounts->count() }}</strong> akun</p>
         </div>
         <div style="display: flex; gap: 12px; align-items: center;">
-            <button class="btn-action btn-action-primary" onclick="openAddModal()">
+            <a href="{{ route('master.accounts.create') }}" class="btn-action btn-action-primary">
                 <i class="fas fa-plus"></i> Tambah Akun
-            </button>
+            </a>
             <button class="btn-outline" id="selectModeBtn" onclick="toggleSelectMode()">
                 <i class="fas fa-check-square"></i> Pilih
             </button>
@@ -447,10 +456,10 @@
                 <td><span class="badge-modern badge-type">{{ ucfirst($account->type) }}</span></td>
                 <td>
                     <div style="display: flex; gap: 8px; justify-content: center;">
-                        <button class="action-btn" title="Edit" onclick="openEditModal({{ json_encode($account) }})">
+                        <a href="{{ route('master.accounts.edit', $account->id) }}" class="action-btn" title="Edit">
                             <i class="fas fa-edit" style="color: #1e2a78;"></i>
-                        </button>
-                        <button class="action-btn delete" title="Hapus" onclick="deleteAccount({{ $account->id }})">
+                        </a>
+                        <button class="action-btn delete" title="Hapus" onclick="deleteAccount({{ $account->id }})" data-account-id="{{ $account->id }}">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
@@ -468,138 +477,87 @@
     </table>
 </div>
 
-<!-- MODAL TAMBAH/EDIT -->
-<div id="accountModal" class="modal-overlay">
-    <div class="modal-card">
-        <h2 id="modalTitle">Tambah Akun Baru</h2>
-        <form id="accountForm">
-            @csrf
-            <input type="hidden" name="_method" id="formMethod" value="POST">
-            <input type="hidden" id="accountId">
-            
-            <div class="form-group">
-                <label>Kode Akun</label>
-                <input type="text" name="code" id="accCode" placeholder="Contoh: 1101" required>
-                <div id="error-code" class="error-text"></div>
-            </div>
-
-            <div class="form-group">
-                <label>Nama Akun</label>
-                <input type="text" name="name" id="accName" placeholder="Contoh: Kas Utama" required>
-                <div id="error-name" class="error-text"></div>
-            </div>
-
-            <div class="form-group">
-                <label>Kategori Akun</label>
-                <select name="type" id="accType" required>
-                    <option value="">Pilih Kategori</option>
-                    <option value="asset">Asset (Aktiva)</option>
-                    <option value="liability">Liability (Kewajiban)</option>
-                    <option value="equity">Equity (Modal)</option>
-                    <option value="revenue">Revenue (Pendapatan)</option>
-                    <option value="expense">Expense (Beban)</option>
-                </select>
-                <div id="error-type" class="error-text"></div>
-            </div>
-
-            <div class="modal-footer">
-                <button type="button" class="btn-modal-cancel" onclick="closeModal()">Batal</button>
-                <button type="submit" class="btn-modal-submit" id="btnSubmit">Simpan Akun</button>
-            </div>
-        </form>
-    </div>
-</div>
-
 <script>
-    const modal = document.getElementById('accountModal');
-    const form = document.getElementById('accountForm');
-    
-    function openAddModal() {
-        document.getElementById('modalTitle').textContent = 'Tambah Akun Baru';
-        document.getElementById('formMethod').value = 'POST';
-        document.getElementById('accountId').value = '';
-        form.reset();
-        clearErrors();
-        modal.classList.add('active');
-    }
-
-    function openEditModal(account) {
-        document.getElementById('modalTitle').textContent = 'Edit Informasi Akun';
-        document.getElementById('formMethod').value = 'PUT';
-        document.getElementById('accountId').value = account.id;
-        document.getElementById('accCode').value = account.code;
-        document.getElementById('accName').value = account.name;
-        document.getElementById('accType').value = account.type;
-        clearErrors();
-        modal.classList.add('active');
-    }
-
-    function closeModal() {
-        modal.classList.remove('active');
-    }
-
-    function clearErrors() {
-        document.querySelectorAll('.error-text').forEach(el => {
-            el.textContent = '';
-            el.classList.remove('active');
-        });
-    }
-
-    form.addEventListener('submit', function(e) {
-        e.preventDefault();
-        clearErrors();
-        
-        const id = document.getElementById('accountId').value;
-        const isEdit = id !== '';
-        const url = isEdit ? `/master/accounts/${id}` : '/master/accounts';
-        
-        const formData = new FormData(this);
-        
-        fetch(url, {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                'Accept': 'application/json'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                Swal.fire({ icon: 'success', title: 'Berhasil', text: data.message, showConfirmButton: false, timer: 1500 })
-                .then(() => location.reload());
-            } else {
-                if (data.errors) {
-                    Object.keys(data.errors).forEach(key => {
-                        const errorEl = document.getElementById(`error-${key}`);
-                        if (errorEl) {
-                            errorEl.textContent = data.errors[key][0];
-                            errorEl.classList.add('active');
-                        }
-                    });
-                } else {
-                    Swal.fire('Gagal!', data.message, 'error');
-                }
-            }
-        });
-    });
-
     function deleteAccount(id) {
-        const accountName = event.target.closest('tr').querySelector('td:nth-child(3)').textContent.trim();
+        // If id is not provided or invalid, try to get from data attribute
+        if (!id || id === 'undefined') {
+            const button = event.target.closest('button[data-account-id]');
+            if (button) {
+                id = button.getAttribute('data-account-id');
+                console.log('Got ID from data-attribute:', id);
+            }
+        }
+        
+        // Debug logging
+        console.log('deleteAccount called with ID:', id, 'Type:', typeof id);
+        
+        // Validate that ID is provided
+        if (!id || id === 'undefined' || id === 'null') {
+            console.error('Account ID is missing or invalid');
+            if (typeof Toast !== 'undefined') {
+                Toast.error('ID akun tidak valid');
+            } else {
+                alert('ID akun tidak valid');
+            }
+            return;
+        }
+        
+        const row = event.target.closest('tr');
+        // Find the account name column (skip checkbox column if visible)
+        const nameCell = row.querySelector('.account-code').closest('td').nextElementSibling;
+        const accountName = nameCell ? nameCell.textContent.trim() : 'akun ini';
+        
+        console.log('Deleting account:', accountName, 'with ID:', id);
+        
         Modal.delete(`akun "${accountName}"`, function() {
-            fetch(`/master/accounts/${id}`, {
-                method: 'DELETE',
+            // Use POST with _method=DELETE (method spoofing)
+            const formData = new FormData();
+            formData.append('_token', '{{ csrf_token() }}');
+            formData.append('_method', 'DELETE');
+            
+            const deleteUrl = `{{ url('/master/accounts') }}/${id}`;
+            console.log('DELETE URL (POST):', deleteUrl);
+            
+            fetch(deleteUrl, {
+                method: 'POST',
+                body: formData,
                 headers: {
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'X-Requested-With': 'XMLHttpRequest',
                     'Accept': 'application/json'
                 }
             })
-            .then(response => response.json())
+            .then(response => {
+                console.log('Response status:', response.status);
+                if (!response.ok) {
+                    return response.json().then(data => {
+                        throw new Error(data.message || 'Gagal menghapus akun');
+                    });
+                }
+                return response.json();
+            })
             .then(data => {
+                console.log('Success response:', data);
                 if (data.success) {
-                    location.reload();
+                    if (typeof Toast !== 'undefined') {
+                        Toast.success(data.message);
+                    } else {
+                        alert(data.message);
+                    }
+                    setTimeout(() => location.reload(), 1500);
                 } else {
-                    alert(data.message);
+                    if (typeof Toast !== 'undefined') {
+                        Toast.error(data.message);
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                if (typeof Toast !== 'undefined') {
+                    Toast.error(error.message || 'Terjadi kesalahan saat menghapus akun');
+                } else {
+                    alert('Error: ' + (error.message || 'Terjadi kesalahan saat menghapus akun'));
                 }
             });
         });
@@ -633,22 +591,66 @@
 
     function bulkDelete() {
         const selectedIds = Array.from(document.querySelectorAll('.account-checkbox:checked')).map(cb => cb.value);
+        
+        if (selectedIds.length === 0) {
+            if (typeof Toast !== 'undefined') {
+                Toast.error('Pilih minimal satu akun untuk dihapus');
+            } else {
+                alert('Pilih minimal satu akun untuk dihapus');
+            }
+            return;
+        }
+        
         Modal.delete(`${selectedIds.length} akun terpilih`, function() {
-            fetch('{{ route("master.accounts.destroyBulk") }}', {
-                method: 'DELETE',
+            // Use POST with _method=DELETE (method spoofing)
+            const formData = new FormData();
+            formData.append('_token', '{{ csrf_token() }}');
+            formData.append('_method', 'DELETE');
+            formData.append('ids', selectedIds.join(','));
+            
+            const deleteUrl = '{{ route("master.accounts.destroyBulk") }}';
+            console.log('Bulk DELETE URL (POST):', deleteUrl, 'IDs:', selectedIds);
+            
+            fetch(deleteUrl, {
+                method: 'POST',
+                body: formData,
                 headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'X-Requested-With': 'XMLHttpRequest',
                     'Accept': 'application/json'
-                },
-                body: JSON.stringify({ ids: selectedIds })
+                }
             })
-            .then(response => response.json())
+            .then(response => {
+                console.log('Bulk delete response status:', response.status);
+                if (!response.ok) {
+                    return response.json().then(data => {
+                        throw new Error(data.message || 'Gagal menghapus akun');
+                    });
+                }
+                return response.json();
+            })
             .then(data => {
+                console.log('Bulk delete success:', data);
                 if (data.success) {
-                    location.reload();
+                    if (typeof Toast !== 'undefined') {
+                        Toast.success(data.message);
+                    } else {
+                        alert(data.message);
+                    }
+                    setTimeout(() => location.reload(), 1500);
                 } else {
-                    alert(data.message);
+                    if (typeof Toast !== 'undefined') {
+                        Toast.error(data.message);
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Bulk delete error:', error);
+                if (typeof Toast !== 'undefined') {
+                    Toast.error(error.message || 'Terjadi kesalahan saat menghapus akun');
+                } else {
+                    alert('Error: ' + (error.message || 'Terjadi kesalahan saat menghapus akun'));
                 }
             });
         });
@@ -661,17 +663,10 @@
     }
 </script>
 
-<script src="{{ asset('js/modal.js') }}?v={{ time() }}"></script>
 
 @if(session('success'))
 <script>
-    setTimeout(function() {
-        const notification = document.createElement('div');
-        notification.style.cssText = 'position:fixed;top:20px;right:20px;background:#1e2a78;color:white;padding:16px 24px;border-radius:12px;z-index:10000;box-shadow:0 10px 30px rgba(30,42,120,0.3);font-weight:600;';
-        notification.textContent = '✓ {{ session("success") }}';
-        document.body.appendChild(notification);
-        setTimeout(() => notification.remove(), 3000);
-    }, 100);
+    Toast.success('{{ session("success") }}');
 </script>
 @endif
 @endsection

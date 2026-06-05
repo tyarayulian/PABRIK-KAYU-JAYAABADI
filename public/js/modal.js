@@ -1,13 +1,15 @@
 // Modal Helper - Jaya Cash
 
-class Modal {
-    constructor(options = {}) {
-        this.title = options.title || 'Konfirmasi';
-        this.message = options.message || 'Apakah Anda yakin?';
-        this.icon = options.icon || 'warning'; // warning, danger, success, info
-        this.confirmText = options.confirmText || 'Ya, Lanjutkan';
-        this.cancelText = options.cancelText || 'Batal';
-        this.onConfirm = options.onConfirm || (() => {});
+// Prevent duplicate declaration
+if (typeof Modal === 'undefined') {
+    class Modal {
+        constructor(options = {}) {
+            this.title = options.title || 'Konfirmasi';
+            this.message = options.message || 'Apakah Anda yakin?';
+            this.icon = options.icon || 'warning'; // warning, danger, success, info
+            this.confirmText = options.confirmText || 'Ya, Lanjutkan';
+            this.cancelText = options.cancelText || 'Batal';
+            this.onConfirm = options.onConfirm || (() => {});
         this.onCancel = options.onCancel || (() => {});
         
         this.create();
@@ -128,3 +130,9 @@ Modal.save = (onConfirm) => {
         onConfirm: onConfirm
     });
 };
+
+    // Make Modal globally available
+    window.Modal = Modal;
+} else {
+    console.log('Modal already loaded, skipping redeclaration');
+}

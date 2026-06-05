@@ -131,30 +131,38 @@
     }
 
     .btn-action {
-        width: 38px;
-        height: 38px;
-        border-radius: 12px;
+        background: #f8fafc;
+        color: #1e2a78;
+        border: 1px solid #e2e8f0;
+        padding: 0;
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.2s;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        transition: all 0.2s;
-        border: 1px solid #f1f5f9;
-        background: #fff;
-        color: #64748b;
         text-decoration: none;
     }
 
     .btn-action:hover {
-        background: #f8fafc;
+        background: #f1f5f9;
         color: #1e2a78;
-        border-color: #cbd5e1;
-        transform: translateY(-1px);
+        border-color: #1e2a78;
+    }
+
+    .btn-delete {
+        background: #fff1f2;
+        color: #f43f5e;
+        border: 1px solid #ffe4e6;
     }
 
     .btn-delete:hover {
-        color: #dc2626;
-        border-color: #fee2e2;
-        background: #fef2f2;
+        background: #ffe4e6;
+        color: #f43f5e;
+        border-color: #fecdd3;
     }
 
     .empty-state {
@@ -355,4 +363,64 @@
         </table>
     </div>
 </div>
+
+<script>
+function deleteReturn(id, productName) {
+    if (typeof Modal !== 'undefined') {
+        Modal.delete(`retur ${productName}`, function() {
+            // Use POST with _method=DELETE
+            const formData = new FormData();
+            formData.append('_token', '{{ csrf_token() }}');
+            formData.append('_method', 'DELETE');
+            
+            fetch(`{{ url('/sales-return') }}/${id}`, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(data => {
+                        throw new Error(data.message || 'Gagal menghapus retur');
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    if (typeof Toast !== 'undefined') {
+                        Toast.success(data.message);
+                    } else {
+                        alert(data.message);
+                    }
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    if (typeof Toast !== 'undefined') {
+                        Toast.error(data.message);
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                if (typeof Toast !== 'undefined') {
+                    Toast.error(error.message || 'Terjadi kesalahan saat menghapus retur');
+                } else {
+                    alert('Error: ' + (error.message || 'Terjadi kesalahan saat menghapus retur'));
+                }
+            });
+        });
+    } else {
+        // Fallback jika Modal belum loaded
+        if (confirm(`Apakah Anda yakin ingin menghapus retur ${productName}?`)) {
+            document.getElementById('deleteForm' + id).submit();
+        }
+    }
+}
+</script>
+
 @endsection

@@ -1310,16 +1310,16 @@
                                     $displayFileName = str_replace(['KasMasuk_', 'KasKeluar_'], [$prefix . '_', $prefix . '_'], $actualFileName);
                                 @endphp
                                 @if($isImage)
-                                    <img src="{{ $fileUrl }}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" style="width: 36px; height: 36px; border-radius: 8px; object-fit: cover; cursor: pointer; border: 1px solid #e2e8f0; box-shadow: 0 1px 2px rgba(0,0,0,0.05);" onclick="openImageViewer('{{ $fileUrl }}', '{{ $displayFileName }}')" title="Klik untuk lihat gambar">
+                                    <img src="{{ $fileUrl }}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" style="width: 36px; height: 36px; border-radius: 8px; object-fit: cover; cursor: pointer; border: 1px solid #e2e8f0; box-shadow: 0 1px 2px rgba(0,0,0,0.05);" onclick="openViewer('{{ $fileUrl }}', '{{ $displayFileName }}')" title="Klik untuk lihat gambar">
                                     <div style="width: 36px; height: 36px; border-radius: 8px; background: #f1f5f9; border: 1px solid #e2e8f0; display: none; align-items: center; justify-content: center; cursor: pointer; font-size: 11px; color: #64748b; font-weight: 600;" onclick="this.previousElementSibling.style.display=''; this.style.display='none';" title="File tidak dapat dimuat">
                                         <i class="fas fa-exclamation" style="color: #ef4444; font-size: 14px;"></i>
                                     </div>
                                 @elseif($isPdf)
-                                    <div style="width: 36px; height: 36px; border-radius: 8px; background: #fff1f2; border: 1px solid #ffe4e6; display: flex; align-items: center; justify-content: center; cursor: pointer;" onclick="openPdfViewer('{{ $fileUrl }}', '{{ $displayFileName }}')" title="Klik untuk lihat PDF">
+                                    <div style="width: 36px; height: 36px; border-radius: 8px; background: #fff1f2; border: 1px solid #ffe4e6; display: flex; align-items: center; justify-content: center; cursor: pointer;" onclick="openViewer('{{ $fileUrl }}', '{{ $displayFileName }}')" title="Klik untuk lihat PDF">
                                         <span style="color: #e11d48; font-size: 10px; font-weight: 800; letter-spacing: 0.05em;">PDF</span>
                                     </div>
                                 @else
-                                    <div style="width: 36px; height: 36px; border-radius: 8px; background: #f1f5f9; border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: center; cursor: pointer;" onclick="window.open('{{ $fileUrl }}', '_blank')" title="Klik untuk download">
+                                    <div style="width: 36px; height: 36px; border-radius: 8px; background: #f1f5f9; border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: center; cursor: pointer;" onclick="openViewer('{{ $fileUrl }}', '{{ $displayFileName }}')" title="Klik untuk download">
                                         <i class="fas fa-file" style="color: #64748b; font-size: 14px;"></i>
                                     </div>
                                 @endif
@@ -1411,7 +1411,6 @@
 
 @include('components.file-viewer')
 
-<script src="{{ asset('js/modal.js') }}?v={{ time() }}"></script>
 <script>
     const ITEMS_PER_PAGE = 10;
     let currentPage = 1;
@@ -1602,13 +1601,17 @@
                 ? `{{ route("kas-masuk.destroy", ":id", false) }}`.replace(':id', id)
                 : `{{ route("kas-keluar.destroy", ":id", false) }}`.replace(':id', id);
 
+            const formData = new FormData();
+            formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
+            formData.append('_method', 'DELETE');
+
             fetch(endpoint, {
-                method: 'DELETE',
+                method: 'POST',
                 headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
                     'Accept': 'application/json',
                     'X-Requested-With': 'XMLHttpRequest'
-                }
+                },
+                body: formData
             })
             .then(response => {
                 if (!response.ok) {

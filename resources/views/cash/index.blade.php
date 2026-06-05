@@ -682,11 +682,12 @@
                                     $fileExt = strtolower(pathinfo($transaction['file_path'], PATHINFO_EXTENSION));
                                     $isImage = in_array($fileExt, ['jpg', 'jpeg', 'png', 'gif', 'webp']);
                                     $fileUrl = url('/storage/' . $transaction['file_path']);
+                                    $fileName = basename($transaction['file_path']);
                                 @endphp
                                 @if($isImage)
-                                    <img src="{{ $fileUrl }}" style="width: 36px; height: 36px; border-radius: 8px; object-fit: cover; cursor: pointer; border: 1px solid #e2e8f0;" onclick="openViewer('{{ $fileUrl }}', 'image')">
+                                    <img src="{{ $fileUrl }}" style="width: 36px; height: 36px; border-radius: 8px; object-fit: cover; cursor: pointer; border: 1px solid #e2e8f0;" onclick="openViewer('{{ $fileUrl }}', '{{ $fileName }}')">
                                 @else
-                                    <div style="width: 36px; height: 36px; border-radius: 8px; background: #f1f5f9; display: flex; align-items: center; justify-content: center; cursor: pointer;" onclick="openViewer('{{ $fileUrl }}', 'file')">
+                                    <div style="width: 36px; height: 36px; border-radius: 8px; background: #f1f5f9; display: flex; align-items: center; justify-content: center; cursor: pointer;" onclick="openViewer('{{ $fileUrl }}', '{{ $fileName }}')">
                                         <i class="fas fa-file" style="color: #64748b;"></i>
                                     </div>
                                 @endif
@@ -698,11 +699,11 @@
 
                     <!-- ACTIONS -->
                     <div style="text-align: left; display: flex; gap: 8px; align-items: center;">
-                        <button style="background: #f1f5f9; color: #1e293b; border: 1px solid #e2e8f0; width: 34px; height: 34px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center;" onclick="showTransactionDetail({{ $transaction['id'] }}, '{{ $transaction['type'] }}')"><i class="fas fa-eye"></i></button>
+                        <button title="Lihat Detail" style="background: #f1f5f9; color: #1e293b; border: 1px solid #e2e8f0; width: 34px; height: 34px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;" onclick="showTransactionDetail({{ $transaction['id'] }}, '{{ $transaction['type'] }}')"><i class="fas fa-eye"></i></button>
                         
-                        <button style="background: #f8fafc; color: #1e2a78; border: 1px solid #e2e8f0; width: 34px; height: 34px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center;" onclick="editTransaction('{{ $transaction['type'] }}', {{ $transaction['id'] }})"><i class="fas fa-edit"></i></button>
+                        <button title="Edit Transaksi" style="background: #f8fafc; color: #1e2a78; border: 1px solid #e2e8f0; width: 34px; height: 34px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;" onclick="editTransaction('{{ $transaction['type'] }}', {{ $transaction['id'] }})"><i class="fas fa-edit"></i></button>
                         
-                        <button style="background: #fff1f2; color: #f43f5e; border: 1px solid #ffe4e6; width: 34px; height: 34px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center;" onclick="deleteTransaction('{{ $transaction['type'] }}', {{ $transaction['id'] }})"><i class="fas fa-trash"></i></button>
+                        <button title="Hapus Transaksi" style="background: #fff1f2; color: #f43f5e; border: 1px solid #ffe4e6; width: 34px; height: 34px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;" onclick="deleteTransaction('{{ $transaction['type'] }}', {{ $transaction['id'] }})"><i class="fas fa-trash"></i></button>
                     </div>
                 </div>
             @empty
@@ -813,6 +814,9 @@
     </div>
 </div>
 
+<!-- Include File Viewer Modal -->
+@include('components.file-viewer')
+
 @endsection
 
 @section('scripts')
@@ -880,7 +884,8 @@
                     document.getElementById('detailAmount').textContent = 'Rp' + parseInt(data.amount).toLocaleString('id-ID');
                     
                     if (data.file_url) {
-                        document.getElementById('detailFile').innerHTML = `<a href="${data.file_url}" target="_blank" style="color: #1e2a78; font-weight: 600;">Lihat Lampiran</a>`;
+                        const fileName = data.file_url.split('/').pop();
+                        document.getElementById('detailFile').innerHTML = `<a href="javascript:void(0)" onclick="openViewer('${data.file_url}', '${fileName}')" style="color: #1e2a78; font-weight: 600; cursor: pointer;">Lihat Lampiran</a>`;
                     } else {
                         document.getElementById('detailFile').textContent = '-';
                     }
@@ -966,37 +971,79 @@
     });
 
     function deleteTransaction(type, id) {
-        Swal.fire({
-            title: 'Apakah anda yakin?',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#1e2a78',
-            cancelButtonColor: '#f1f5f9',
-            confirmButtonText: 'Ya, hapus!',
-            cancelButtonText: 'Batal'
-        }).then((result) => {
-            if (result.isConfirmed) {
+        if (typeof Modal !== 'undefined') {
+            Modal.delete('transaksi ini', function() {
                 const url = type === 'income' ? `/cash/in/${id}` : `/cash/out/${id}`;
+                
+                // Use POST with _method=DELETE
+                const formData = new FormData();
+                formData.append('_token', '{{ csrf_token() }}');
+                formData.append('_method', 'DELETE');
+                
                 fetch(url, {
-                    method: 'DELETE',
-                    headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'X-Requested-With': 'XMLHttpRequest' }
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(res => {
+                    if (res.success) {
+                        if (typeof Toast !== 'undefined') {
+                            Toast.success(res.message);
+                        } else {
+                            alert(res.message);
+                        }
+                        setTimeout(() => location.reload(), 1500);
+                    } else {
+                        if (typeof Toast !== 'undefined') {
+                            Toast.error(res.message);
+                        } else {
+                            alert('Error: ' + res.message);
+                        }
+                    }
+                })
+                .catch(error => {
+                    if (typeof Toast !== 'undefined') {
+                        Toast.error('Error: ' + error.message);
+                    } else {
+                        alert('Error: ' + error.message);
+                    }
+                });
+            });
+        } else {
+            // Fallback
+            if (confirm('Apakah Anda yakin ingin menghapus transaksi ini?')) {
+                const url = type === 'income' ? `/cash/in/${id}` : `/cash/out/${id}`;
+                const formData = new FormData();
+                formData.append('_token', '{{ csrf_token() }}');
+                formData.append('_method', 'DELETE');
+                
+                fetch(url, {
+                    method: 'POST',
+                    body: formData,
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
                 })
                 .then(res => res.json())
                 .then(res => {
                     if (res.success) {
-                        Swal.fire('Dihapus!', res.message, 'success').then(() => location.reload());
+                        alert(res.message);
+                        location.reload();
                     }
                 });
             }
-        });
+        }
     }
 
     function editTransaction(type, id) {
-        openModal(type, id);
-    }
-
-    function openViewer(url, type) {
-        window.open(url, '_blank');
+        // Redirect ke halaman edit terpisah
+        if (type === 'income') {
+            window.location.href = `/cash/in/${id}/edit`;
+        } else {
+            window.location.href = `/cash/out/${id}/edit`;
+        }
     }
 </script>
 @endsection

@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="{{ asset('css/print-report.css') }}?v={{ time() }}">
 <style>
     :root {
         --primary-navy: #1e2a78;
@@ -254,10 +255,20 @@
     .type-income { background: #dcfce7; color: #15803d; }
     .type-expense { background: #fee2e2; color: #b91c1c; }
 
+    /* Additional print customizations beyond the standard print-report.css */
     @media print {
-        @page { size: landscape; margin: 10mm; }
-        .header-section, .btn-navy, .btn-outline-navy, .sidebar { display: none !important; }
-        .table-section { box-shadow: none !important; border: 1.5px solid #000 !important; border-radius: 0 !important; }
+        .stats-grid,
+        .filter-panel {
+            display: none !important;
+        }
+        .category-row {
+            background: var(--primary-navy) !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+        .category-row td {
+            color: white !important;
+        }
     }
 </style>
 @endsection

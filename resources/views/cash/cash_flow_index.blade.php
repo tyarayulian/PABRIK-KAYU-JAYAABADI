@@ -654,13 +654,13 @@
                                     $isPdf = $fileExt === 'pdf';
                                 @endphp
                                 @if($isImage)
-                                    <img src="{{ Storage::url($transaction['file_path']) }}" style="width: 32px; height: 32px; border-radius: 8px; object-fit: cover; cursor: pointer; border: 1px solid #eee;" onclick="openImageViewer('{{ Storage::url($transaction['file_path']) }}', '{{ basename($transaction['file_path']) }}')" title="Klik untuk lihat gambar">
+                                    <img src="{{ Storage::url($transaction['file_path']) }}" style="width: 32px; height: 32px; border-radius: 8px; object-fit: cover; cursor: pointer; border: 1px solid #eee;" onclick="openViewer('{{ Storage::url($transaction['file_path']) }}', '{{ basename($transaction['file_path']) }}')" title="Klik untuk lihat gambar">
                                 @elseif($isPdf)
-                                    <div style="width: 32px; height: 32px; border-radius: 8px; background: #fef2f2; border: 1px solid #fee2e2; display: flex; align-items: center; justify-content: center; cursor: pointer;" onclick="openPdfViewer('{{ Storage::url($transaction['file_path']) }}', '{{ basename($transaction['file_path']) }}')" title="Klik untuk lihat PDF">
+                                    <div style="width: 32px; height: 32px; border-radius: 8px; background: #fef2f2; border: 1px solid #fee2e2; display: flex; align-items: center; justify-content: center; cursor: pointer;" onclick="openViewer('{{ Storage::url($transaction['file_path']) }}', '{{ basename($transaction['file_path']) }}')" title="Klik untuk lihat PDF">
                                         <span style="color: #dc2626; font-size: 9px; font-weight: 800;">PDF</span>
                                     </div>
                                 @else
-                                    <div style="width: 32px; height: 32px; border-radius: 8px; background: #f5f5f5; border: 1px solid #eee; display: flex; align-items: center; justify-content: center; cursor: pointer;" onclick="window.open('{{ Storage::url($transaction['file_path']) }}', '_blank')" title="Klik untuk download">
+                                    <div style="width: 32px; height: 32px; border-radius: 8px; background: #f5f5f5; border: 1px solid #eee; display: flex; align-items: center; justify-content: center; cursor: pointer;" onclick="openViewer('{{ Storage::url($transaction['file_path']) }}', '{{ basename($transaction['file_path']) }}')" title="Klik untuk download">
                                         <i class="fas fa-file" style="color: #666; font-size: 14px;"></i>
                                     </div>
                                 @endif
@@ -872,7 +872,6 @@
     </div>
 </div>
 
-<script src="{{ asset('js/modal.js') }}?v={{ time() }}"></script>
 <script>
     const ITEMS_PER_PAGE = 10;
     let currentPage = 1;
@@ -1389,7 +1388,7 @@
                     </div>`;
                 } else {
                     fileHtml += `<div style="padding: 12px;">
-                        <a href="${fileUrl}" target="_blank" style="color: #3b82f6; font-weight: 500; font-size: 12px;">📥 Download ${fileName}</a>
+                        <a href="javascript:void(0)" onclick="openViewer('${fileUrl}', '${fileName}')" style="color: #3b82f6; font-weight: 500; font-size: 12px; cursor: pointer;">📥 Lihat File</a>
                     </div>`;
                 }
                 
@@ -2183,6 +2182,9 @@
     }
 </script>
 @endsection
+
+<!-- Include File Viewer Modal -->
+@include('components.file-viewer')
 
 @section('scripts')
 <script>
