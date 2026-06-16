@@ -41,7 +41,7 @@ class NeracaController extends Controller
         $totalEquity = $totalEquityWithoutProfit + $currentYearProfit;
         $totalLiabilitiesAndEquity = $totalLiabilities + $totalEquity;
 
-        return view('report.neraca', compact(
+        return view('report.neraca.index', compact(
             'assets', 'totalAssets',
             'liabilities', 'totalLiabilities',
             'equity', 'totalEquityWithoutProfit',
@@ -158,7 +158,7 @@ class NeracaController extends Controller
         $totalEquity = $totalEquityWithoutProfit + $currentYearProfit;
         $totalLiabilitiesAndEquity = $totalLiabilities + $totalEquity;
 
-        return view('report.neraca-print', compact(
+        return view('report.neraca.print', compact(
             'assets', 'totalAssets',
             'liabilities', 'totalLiabilities',
             'equity', 'totalEquityWithoutProfit',

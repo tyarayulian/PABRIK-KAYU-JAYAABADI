@@ -134,5 +134,5 @@ Modal.save = (onConfirm) => {
     // Make Modal globally available
     window.Modal = Modal;
 } else {
-    console.log('Modal already loaded, skipping redeclaration');
+    console.debug('Modal already loaded, skipping redeclaration');
 }

@@ -1,1 +1,0 @@
-print_r(App\Models\Product::where('size', '8x12x4')-; 

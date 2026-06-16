@@ -17,7 +17,7 @@ class KategoriController extends Controller
             ->orderBy('name')
             ->paginate(15);
 
-        return view('master.categories', compact('categories'));
+        return view('master.kategori.index', compact('categories'));
     }
 
     public function create()
@@ -28,7 +28,7 @@ class KategoriController extends Controller
             ->orderBy('code')
             ->get();
 
-        return view('master.categories.create', compact('allAccounts'));
+        return view('master.kategori.create', compact('allAccounts'));
     }
 
     public function store(Request $request)
@@ -71,7 +71,7 @@ class KategoriController extends Controller
             ->orderBy('code')
             ->get();
 
-        return view('master.categories.edit', compact('category', 'allAccounts'));
+        return view('master.kategori.edit', compact('category', 'allAccounts'));
     }
 
     public function update(Request $request, $id)

@@ -1,0 +1,460 @@
+@extends('layouts.app')
+
+@section('title', 'Retur Penjualan')
+@section('breadcrumb', 'Transaksi / Retur Penjualan')
+
+@section('styles')
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="{{ asset('css/modal.css') }}?v={{ time() }}">
+<style>
+    * {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    .main-content {
+        background-color: transparent !important;
+        box-shadow: none !important;
+        border: none !important;
+    }
+
+    .page-header {
+        margin-bottom: 30px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .page-header h1 {
+        font-size: 28px;
+        font-weight: 700;
+        color: #000;
+        margin-bottom: 8px;
+    }
+
+    .page-header p {
+        font-size: 14px;
+        color: #666;
+        margin: 0;
+    }
+
+    .table-section {
+        background: white;
+        border-radius: 30px;
+        border: 1px solid #f0f0f0;
+        overflow: hidden;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+
+    .table-title-section {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 30px;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .table-title-section h2 {
+        font-size: 20px;
+        font-weight: 800;
+        color: #000;
+        margin: 0;
+    }
+
+    .btn-add {
+        background: #f0f4ff;
+        color: #1e2a78;
+        border: 1px solid #e2e8f0;
+        padding: 12px 24px;
+        border-radius: 15px;
+        font-weight: 600;
+        font-size: 14px;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+
+    .btn-add:hover {
+        background: #e0e8ff;
+        color: #1e2a78;
+        transform: translateY(-1px);
+    }
+
+    .clean-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .clean-table th {
+        background: #f8fafc;
+        padding: 18px 24px;
+        text-align: left;
+        font-size: 11px;
+        font-weight: 800;
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .clean-table td {
+        padding: 20px 24px;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 14px;
+        color: #1e293b;
+    }
+
+    .clean-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .clean-table tr:hover td {
+        background-color: #fcfdfe;
+    }
+
+    .amount {
+        font-weight: 800;
+        color: #1e2a78;
+    }
+
+    .badge-qty {
+        background: #f0f7ff;
+        color: #1e2a78;
+        padding: 6px 12px;
+        border-radius: 10px;
+        font-weight: 700;
+        font-size: 12px;
+        display: inline-block;
+    }
+
+    .btn-action {
+        background: #f8fafc;
+        color: #1e2a78;
+        border: 1px solid #e2e8f0;
+        padding: 0;
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+    }
+
+    .btn-action:hover {
+        background: #f1f5f9;
+        color: #1e2a78;
+        border-color: #1e2a78;
+    }
+
+    .btn-delete {
+        background: #fff1f2;
+        color: #f43f5e;
+        border: 1px solid #ffe4e6;
+    }
+
+    .btn-delete:hover {
+        background: #ffe4e6;
+        color: #f43f5e;
+        border-color: #fecdd3;
+    }
+
+    .empty-state {
+        padding: 80px 40px;
+        text-align: center;
+    }
+
+    .empty-state i {
+        font-size: 48px;
+        color: #e2e8f0;
+        margin-bottom: 20px;
+    }
+
+    .empty-state p {
+        color: #94a3b8;
+        font-weight: 500;
+    }
+
+    /* Stat Cards */
+    .stat-cards-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .stat-card {
+        background: #fff;
+        padding: 18px 24px;
+        border-radius: 20px;
+        border: 1px solid #f0f0f0;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        transition: all 0.3s;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    }
+
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        flex-shrink: 0;
+    }
+
+    .stat-icon.total-amount {
+        background-color: #fef2f2;
+        color: #dc2626;
+    }
+
+    .stat-icon.total-qty {
+        background-color: #f0f9ff;
+        color: #0369a1;
+    }
+
+    .stat-icon.total-count {
+        background-color: #f8fafc;
+        color: #475569;
+    }
+
+    .stat-info {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+    }
+
+    .stat-card-label {
+        font-size: 12px;
+        color: #94a3b8;
+        font-weight: 700;
+        margin: 0;
+        text-transform: uppercase;
+        letter-spacing: 0.025em;
+        margin-bottom: 4px;
+    }
+
+    .stat-card-value {
+        font-size: 20px;
+        font-weight: 800;
+        color: #1e293b;
+        margin: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+</style>
+@endsection
+
+@section('content')
+<div style="padding: 0 0 40px 0;">
+
+
+
+<div class="stat-cards-grid">
+    <div class="stat-card">
+        <div class="stat-icon total-amount">
+            <i class="fas fa-money-bill-wave"></i>
+        </div>
+        <div class="stat-info">
+            <p class="stat-card-label">Total Nilai Retur</p>
+            <h3 class="stat-card-value">Rp {{ number_format($totalReturnAmount, 0, ',', '.') }}</h3>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon total-qty">
+            <i class="fas fa-cubes"></i>
+        </div>
+        <div class="stat-info">
+            <p class="stat-card-label">Total Qty Retur</p>
+            <h3 class="stat-card-value">{{ number_format($totalReturnQty, 0, ',', '.') }}</h3>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon total-count">
+            <i class="fas fa-history"></i>
+        </div>
+        <div class="stat-info">
+            <p class="stat-card-label">Jumlah Transaksi</p>
+            <h3 class="stat-card-value">{{ $returnCount }} Transaksi</h3>
+        </div>
+    </div>
+</div>
+
+<div class="table-section">
+    <div class="table-title-section">
+        <div>
+            <h2>Daftar Transaksi Retur</h2>
+            <p style="font-size: 14px; color: #64748b; margin: 4px 0 0 0;">Menampilkan total <strong>{{ $returnCount }}</strong> transaksi</p>
+        </div>
+        <a href="{{ route('sales-return.create') }}" class="btn-add">
+            <i class="fas fa-plus"></i>
+            <span>Tambah Retur</span>
+        </a>
+    </div>
+
+    <!-- Filter Row -->
+    <div style="display: flex; gap: 16px; flex-wrap: nowrap; align-items: flex-end; padding: 20px 30px; background: white; border-bottom: 1px solid #f1f5f9;">
+        <form method="GET" action="{{ route('sales-return.index') }}" style="display: flex; gap: 16px; flex-wrap: nowrap; align-items: flex-end; width: 100%;">
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+                <label style="font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em;">MULAI</label>
+                <input type="date" name="start_date" value="{{ $startDate }}" style="padding: 10px 16px; border: 1px solid #e2e8f0; border-radius: 12px; font-size: 14px; background: #f8fafc; height: 42px; box-sizing: border-box;">
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+                <label style="font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em;">AKHIR</label>
+                <input type="date" name="end_date" value="{{ $endDate }}" style="padding: 10px 16px; border: 1px solid #e2e8f0; border-radius: 12px; font-size: 14px; background: #f8fafc; height: 42px; box-sizing: border-box;">
+            </div>
+            <div style="display: flex; gap: 8px; align-items: flex-end; height: 42px;">
+                <button type="submit" style="background: #0f172a; color: white; border: none; padding: 0 20px; height: 42px; border-radius: 12px; font-weight: 600; font-size: 14px; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-filter"></i> Terapkan
+                </button>
+                <a href="{{ route('sales-return.index') }}" style="background: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; padding: 0 16px; height: 42px; border-radius: 12px; font-weight: 600; font-size: 14px; display: flex; align-items: center; text-decoration: none;">Reset</a>
+            </div>
+            <div style="flex: 1; min-width: 250px; margin-left: auto; display: flex; flex-direction: column; gap: 6px;">
+                <div style="position: relative;">
+                    <i class="fas fa-search" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 14px;"></i>
+                    <input type="text" name="search" value="{{ $search }}" placeholder="Cari produk atau keterangan..." style="width: 100%; padding: 10px 16px 10px 42px; border: 1px solid #e2e8f0; border-radius: 12px; font-size: 14px; background: #f8fafc; height: 42px; box-sizing: border-box;">
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="table-responsive">
+        <table class="clean-table">
+            <thead>
+                <tr>
+                    <th style="text-align: center; border-bottom: 2px solid #e2e8f0;">TANGGAL</th>
+                    <th style="border-bottom: 2px solid #e2e8f0;">PRODUK</th>
+                    <th style="text-align: center; border-bottom: 2px solid #e2e8f0;">JUMLAH</th>
+                    <th style="text-align: right; border-bottom: 2px solid #e2e8f0;">TOTAL NILAI</th>
+                    <th style="border-bottom: 2px solid #e2e8f0;">KETERANGAN</th>
+                    <th style="text-align: center; border-bottom: 2px solid #e2e8f0;">AKSI</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($salesReturns as $return)
+                    <tr>
+                        <td>
+                            <div style="font-weight: 800; color: #1e293b;">{{ $return->date->format('d M Y') }}</div>
+                            <div style="font-size: 12px; color: #94a3b8; margin-top: 4px;">{{ $return->date->format('H:i') }}</div>
+                        </td>
+                        <td>
+                            <div style="font-weight: 700; color: #1e293b;">{{ $return->product->name ?? 'N/A' }}</div>
+                            <div style="font-size: 12px; color: #64748b; margin-top: 4px;">{{ $return->product->wood_type ?? '' }} - {{ $return->product->size ?? '' }}</div>
+                        </td>
+                        <td style="text-align: center;">
+                            <span class="badge-qty">{{ number_format($return->quantity, 0, ',', '.') }} {{ $return->product->unit ?? 'Unit' }}</span>
+                        </td>
+                        <td style="text-align: right;">
+                            <span class="amount">Rp {{ number_format($return->amount, 0, ',', '.') }}</span>
+                        </td>
+                        <td>
+                            <div style="font-size: 13px; color: #64748b; max-width: 200px; line-height: 1.5;">
+                                {{ $return->description ?: '-' }}
+                            </div>
+                        </td>
+                        <td style="text-align: center;">
+                            <div style="display: flex; justify-content: center; gap: 8px;">
+                                <a href="{{ route('sales-return.edit', $return->id) }}" class="btn-action" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <form id="deleteForm{{ $return->id }}" action="{{ route('sales-return.destroy', $return->id) }}" method="POST" style="display: inline;">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="button" class="btn-action btn-delete" title="Hapus" onclick="deleteReturn({{ $return->id }}, '{{ $return->product->name ?? 'retur ini' }}')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="6">
+                            <div class="empty-state">
+                                <i class="fas fa-undo-alt"></i>
+                                <p>Belum ada transaksi retur yang tercatat.</p>
+                            </div>
+                        </td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+</div>
+
+</div>
+
+<script>
+function deleteReturn(id, productName) {
+    if (typeof Modal !== 'undefined') {
+        Modal.delete(`retur ${productName}`, function() {
+            // Use POST with _method=DELETE
+            const formData = new FormData();
+            formData.append('_token', '{{ csrf_token() }}');
+            formData.append('_method', 'DELETE');
+            
+            fetch(`{{ url('/sales-return') }}/${id}`, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(data => {
+                        throw new Error(data.message || 'Gagal menghapus retur');
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    if (typeof Toast !== 'undefined') {
+                        Toast.success(data.message);
+                    } else {
+                        alert(data.message);
+                    }
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    if (typeof Toast !== 'undefined') {
+                        Toast.error(data.message);
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                if (typeof Toast !== 'undefined') {
+                    Toast.error(error.message || 'Terjadi kesalahan saat menghapus retur');
+                } else {
+                    alert('Error: ' + (error.message || 'Terjadi kesalahan saat menghapus retur'));
+                }
+            });
+        });
+    } else {
+        // Fallback jika Modal belum loaded
+        if (confirm(`Apakah Anda yakin ingin menghapus retur ${productName}?`)) {
+            document.getElementById('deleteForm' + id).submit();
+        }
+    }
+}
+</script>
+
+@endsection

@@ -28,24 +28,23 @@ class ProductRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'required|string|max:255',
-            'wood_type' => 'nullable|string|max:100',
-            'product_category' => 'nullable|string|max:100',
-            'size' => 'nullable|string|max:100',
-            'cubic_content' => 'nullable|integer|min:0',
-            'unit' => 'required|string|max:50',
-            'cost' => 'required|numeric|min:0',
-            'stock' => 'nullable|numeric|min:0',
+            'wood_type'      => 'required|string|max:100',
+            'cost'           => 'required|numeric|min:0',
+            'stock'          => 'nullable|numeric|min:0',
+            'products'       => 'nullable|array',
+            'products.*.category'                => 'nullable|string',
+            'products.*.items'                   => 'nullable|array',
+            'products.*.items.*.size'            => 'nullable|string|max:100',
+            'products.*.items.*.cubic_content'   => 'nullable|integer|min:0',
+            'products.*.items.*.product_id'      => 'nullable|integer',
         ];
     }
 
     public function messages(): array
     {
         return [
-            'name.required' => 'Nama produk harus diisi',
-            'unit.required' => 'Satuan produk harus diisi (contoh: Ikat, Pcs, M3)',
-            'cost.required' => 'Harga beli/HPP harus diisi',
-            'cost.numeric' => 'Harga beli/HPP harus berupa angka',
+            'wood_type.required' => 'Jenis kayu harus diisi',
+            'cost.required'      => 'Harga beli/HPP harus diisi',
         ];
     }
 }

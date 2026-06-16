@@ -1,23 +1,24 @@
 // Toast Notification Component - Jaya Cash
+// Prevent redeclaration on Turbo navigation
+if (typeof Toast === 'undefined') {
+    class Toast {
+        static show(message, type = 'success', duration = 3000) {
+            // Remove existing toast if any
+            const existingToast = document.getElementById('globalToast');
+            if (existingToast) {
+                existingToast.remove();
+            }
 
-class Toast {
-    static show(message, type = 'success', duration = 3000) {
-        // Remove existing toast if any
-        const existingToast = document.getElementById('globalToast');
-        if (existingToast) {
-            existingToast.remove();
-        }
-
-        // Create toast element
-        const toast = document.createElement('div');
-        toast.id = 'globalToast';
-        
-        // Set styles based on type - CLEAN MODERN DESIGN dengan border kiri
-        let borderColor, iconBg, iconColor, icon;
-        switch(type) {
-            case 'success':
-                borderColor = '#1e2a78'; // Navy Blue
-                iconBg = '#f0f7ff';
+            // Create toast element
+            const toast = document.createElement('div');
+            toast.id = 'globalToast';
+            
+            // Set styles based on type - CLEAN MODERN DESIGN dengan border kiri
+            let borderColor, iconBg, iconColor, icon;
+            switch(type) {
+                case 'success':
+                    borderColor = '#1e2a78'; // Navy Blue
+                    iconBg = '#f0f7ff';
                 iconColor = '#1e2a78';
                 icon = '✓';
                 break;
@@ -150,3 +151,7 @@ if (!document.getElementById('toastAnimations')) {
 
 // Export untuk global usage
 window.Toast = Toast;
+
+} else {
+    console.debug('Toast already loaded, skipping redeclaration');
+}

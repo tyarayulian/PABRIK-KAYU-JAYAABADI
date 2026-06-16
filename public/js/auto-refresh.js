@@ -1,23 +1,25 @@
-class AutoRefresh {
-    constructor(config = {}) {
-        this.apiUrl = config.apiUrl;
-        this.interval = config.interval || 5000;
-        this.selectors = config.selectors || {};
-        this.onUpdate = config.onUpdate || null;
-        this.cachedElements = {};
-        this.intervalId = null;
-        this.lastData = null;
-        this.isActive = true;
-        
-        if (typeof requestIdleCallback !== 'undefined') {
-            requestIdleCallback(() => this.start(), { timeout: 100 });
-        } else {
-            setTimeout(() => this.start(), 100);
+// Prevent redeclaration on Turbo navigation
+if (typeof AutoRefresh === 'undefined') {
+    class AutoRefresh {
+        constructor(config = {}) {
+            this.apiUrl = config.apiUrl;
+            this.interval = config.interval || 5000;
+            this.selectors = config.selectors || {};
+            this.onUpdate = config.onUpdate || null;
+            this.cachedElements = {};
+            this.intervalId = null;
+            this.lastData = null;
+            this.isActive = true;
+            
+            if (typeof requestIdleCallback !== 'undefined') {
+                requestIdleCallback(() => this.start(), { timeout: 100 });
+            } else {
+                setTimeout(() => this.start(), 100);
+            }
         }
-    }
 
-    start() {
-        if (!this.isActive) return;
+        start() {
+            if (!this.isActive) return;
         this.cacheElements();
         this.fetch();
         this.intervalId = setInterval(() => this.fetch(), this.interval);
@@ -35,8 +37,14 @@ class AutoRefresh {
     fetch() {
         if (!this.isActive) return;
         fetch(this.apiUrl, { signal: AbortSignal.timeout(3000) })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) return null;
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) return null;
+                return response.json();
+            })
             .then(data => {
+                if (!data) return;
                 if (JSON.stringify(data) !== JSON.stringify(this.lastData)) {
                     this.updateUI(data);
                     this.lastData = data;
@@ -45,7 +53,7 @@ class AutoRefresh {
             })
             .catch(error => {
                 if (error.name !== 'AbortError') {
-                    console.log('Auto-refresh error:', error);
+                    // silent fail - jangan spam console
                 }
             });
     }
@@ -65,4 +73,10 @@ class AutoRefresh {
             this.intervalId = null;
         }
     }
+}
+
+    // Export to global scope
+    window.AutoRefresh = AutoRefresh;
+} else {
+    console.debug('AutoRefresh already loaded, skipping redeclaration');
 }

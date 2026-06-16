@@ -9,7 +9,7 @@ class KasMasuk extends Model
 {
     protected $table = 'kas_masuk';
 
-    protected $fillable = ['date', 'category_id', 'product_id', 'quantity', 'price', 'description', 'amount', 'file_path', 'account_id'];
+    protected $fillable = ['date', 'category_id', 'product_id', 'quantity', 'price', 'description', 'amount', 'file_path', 'account_id', 'payment_account_id'];
 
     protected $casts = [
         'date' => 'datetime',
@@ -65,18 +65,21 @@ class KasMasuk extends Model
 
     public function syncJournalEntry()
     {
-        // Delete existing entries first to avoid duplicates on update
         $this->deleteJournalEntry();
 
-        // Find Kas/Bank account (Asset type, preferentially contains 'Kas' or code 1110)
-        $cashAccount = ChartOfAccount::where('type', 'asset')
-            ->where(function ($q) {
-                $q->where('name', 'like', '%Kas%')
-                    ->orWhere('code', '1110');
-            })
-            ->first();
-
-        if (! $cashAccount) {
+        // Gunakan payment_account_id jika dipilih, fallback ke Kas default
+        $cashAccount = null;
+        if ($this->payment_account_id) {
+            $cashAccount = ChartOfAccount::find($this->payment_account_id);
+        }
+        if (!$cashAccount) {
+            $cashAccount = ChartOfAccount::where('type', 'asset')
+                ->where(function ($q) {
+                    $q->where('name', 'like', '%Kas%')
+                        ->orWhere('code', '1110');
+                })->first();
+        }
+        if (!$cashAccount) {
             $cashAccount = ChartOfAccount::where('type', 'asset')->first();
         }
 
@@ -119,10 +122,10 @@ class KasMasuk extends Model
 
             // 3. HPP Logic (Only if it's a product transaction)
             if ($this->product_id && $this->product && $this->quantity > 0) {
-                if ($this->product->hpp_account_id && $this->product->inventory_account_id) {
+                if ($this->product->hpp_account_id) {
                     $hppAmount = $this->product->cost * $this->quantity;
 
-                    // Debit HPP (Expense)
+                    // Debit HPP (COGS)
                     GeneralJournal::create([
                         'journal_date' => $this->date,
                         'account_id' => $this->product->hpp_account_id,
@@ -133,16 +136,21 @@ class KasMasuk extends Model
                         'source_id' => $this->id,
                     ]);
 
-                    // Credit Inventory (Asset)
-                    GeneralJournal::create([
-                        'journal_date' => $this->date,
-                        'account_id' => $this->product->inventory_account_id,
-                        'type' => 'credit',
-                        'amount' => $hppAmount,
-                        'reference' => 'HPP-'.$this->id,
-                        'source' => 'cash_in',
-                        'source_id' => $this->id,
-                    ]);
+                    // Credit Modal/Ekuitas (bukan persediaan bahan baku)
+                    $equityAccount = ChartOfAccount::where('code', '3100')->first()
+                        ?? ChartOfAccount::where('type', 'equity')->first();
+
+                    if ($equityAccount) {
+                        GeneralJournal::create([
+                            'journal_date' => $this->date,
+                            'account_id' => $equityAccount->id,
+                            'type' => 'credit',
+                            'amount' => $hppAmount,
+                            'reference' => 'HPP-'.$this->id,
+                            'source' => 'cash_in',
+                            'source_id' => $this->id,
+                        ]);
+                    }
                 }
             }
         }

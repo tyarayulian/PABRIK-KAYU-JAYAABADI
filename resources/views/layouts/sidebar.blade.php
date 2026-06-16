@@ -258,9 +258,9 @@
                 </a>
             </li>
             <li>
-                <a href="{{ route('master.products.index') }}" class="{{ request()->routeIs('master.products.index') || (request()->routeIs('master.products.*') && !request()->routeIs('master.products.menu')) ? 'active' : '' }}">
+                <a href="{{ route('master.products.index') }}" class="{{ request()->routeIs('master.products.*') ? 'active' : '' }}">
                     <i class="fas fa-box"></i>
-                    <span>Stok Produk</span>
+                    <span>Produk & Stok</span>
                 </a>
             </li>
         </ul>
@@ -280,15 +280,15 @@
                 </a>
             </li>
             <li>
-                <a href="{{ route('report.income-statement') }}" class="{{ request()->routeIs('report.income-statement') ? 'active' : '' }}">
-                    <i class="fas fa-chart-line"></i>
-                    <span>Laba Rugi</span>
-                </a>
-            </li>
-            <li>
                 <a href="{{ route('report.trial-balance') }}" class="{{ request()->routeIs('report.trial-balance') ? 'active' : '' }}">
                     <i class="fas fa-clipboard-list"></i>
                     <span>Neraca Saldo</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('report.income-statement') }}" class="{{ request()->routeIs('report.income-statement') ? 'active' : '' }}">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Laba Rugi</span>
                 </a>
             </li>
         </ul>

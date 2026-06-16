@@ -9,7 +9,7 @@ class KasKeluar extends Model
 {
     protected $table = 'kas_keluar';
 
-    protected $fillable = ['date', 'category_id', 'product_id', 'quantity', 'price', 'description', 'amount', 'is_processed', 'file_path', 'account_id'];
+    protected $fillable = ['date', 'category_id', 'product_id', 'quantity', 'price', 'description', 'amount', 'is_processed', 'file_path', 'account_id', 'hutan', 'payment_account_id'];
 
     protected $casts = [
         'date' => 'datetime',
@@ -66,18 +66,21 @@ class KasKeluar extends Model
 
     public function syncJournalEntry()
     {
-        // Delete existing entries first to avoid duplicates on update
         $this->deleteJournalEntry();
 
-        // Find Kas/Bank account (Asset type, preferentially contains 'Kas' or code 1110)
-        $cashAccount = ChartOfAccount::where('type', 'asset')
-            ->where(function ($q) {
-                $q->where('name', 'like', '%Kas%')
-                    ->orWhere('code', '1110');
-            })
-            ->first();
-
-        if (! $cashAccount) {
+        // Gunakan payment_account_id jika dipilih, fallback ke Kas default
+        $cashAccount = null;
+        if ($this->payment_account_id) {
+            $cashAccount = ChartOfAccount::find($this->payment_account_id);
+        }
+        if (!$cashAccount) {
+            $cashAccount = ChartOfAccount::where('type', 'asset')
+                ->where(function ($q) {
+                    $q->where('name', 'like', '%Kas%')
+                        ->orWhere('code', '1110');
+                })->first();
+        }
+        if (!$cashAccount) {
             $cashAccount = ChartOfAccount::where('type', 'asset')->first();
         }
 

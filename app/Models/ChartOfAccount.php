@@ -14,10 +14,14 @@ class ChartOfAccount extends Model
         'type',
         'description',
         'is_active',
+        'opening_balance',
+        'opening_balance_date',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'opening_balance' => 'decimal:2',
+        'opening_balance_date' => 'date',
     ];
 
     public function journals()

@@ -26,7 +26,7 @@ class KasKeluarController extends Controller
             })
             ->orderBy('code')->get();
 
-        return view('cash.cash_out_index', compact('cashOuts', 'categories', 'accounts'));
+        return view('transaksi-kas.kas_keluar_index', compact('cashOuts', 'categories', 'accounts'));
     }
 
     public function create()
@@ -54,7 +54,15 @@ class KasKeluarController extends Controller
 
         $chartOfAccounts = ChartOfAccount::where('is_active', true)->orderBy('code')->get();
 
-        return view('transaksi.kas-keluar.create', compact('categories', 'products', 'chartOfAccounts'));
+        $cashAccounts = ChartOfAccount::where('is_active', true)
+            ->where('type', 'asset')
+            ->where(function($q) {
+                $q->where('name', 'like', '%Kas%')
+                  ->orWhere('name', 'like', '%Bank%');
+            })
+            ->orderBy('code')->get();
+
+        return view('transaksi-produk.pembelian.create', compact('categories', 'products', 'chartOfAccounts', 'cashAccounts'));
     }
 
     public function edit(KasKeluar $kasKeluar)
@@ -75,7 +83,15 @@ class KasKeluarController extends Controller
             });
         $chartOfAccounts = ChartOfAccount::where('is_active', true)->orderBy('code')->get();
 
-        return view('transaksi.kas-keluar.edit', compact('kasKeluar', 'categories', 'products', 'chartOfAccounts'));
+        $cashAccounts = ChartOfAccount::where('is_active', true)
+            ->where('type', 'asset')
+            ->where(function($q) {
+                $q->where('name', 'like', '%Kas%')
+                  ->orWhere('name', 'like', '%Bank%');
+            })
+            ->orderBy('code')->get();
+
+        return view('transaksi-produk.pembelian.edit', compact('kasKeluar', 'categories', 'products', 'chartOfAccounts', 'cashAccounts'));
     }
 
     public function getCategoryItems(Request $request)
@@ -138,7 +154,7 @@ class KasKeluarController extends Controller
             }
 
             if (!empty($request->hutan)) {
-                $validated['description'] = ($validated['description'] ?? '') . " [Asal Kayu: " . $request->hutan . "]";
+                $validated['hutan'] = $request->hutan;
             }
 
             KasKeluar::create($validated);
@@ -187,7 +203,7 @@ class KasKeluarController extends Controller
             ]);
         }
 
-        return view('transaksi.kas-keluar.show', compact('kasKeluar'));
+        return view('transaksi-produk.pembelian.show', compact('kasKeluar'));
     }
 
     /**
@@ -235,7 +251,7 @@ class KasKeluarController extends Controller
             }
 
             if (!empty($request->hutan)) {
-                $validated['description'] = ($validated['description'] ?? '') . " [Asal Kayu: " . $request->hutan . "]";
+                $validated['hutan'] = $request->hutan;
             }
 
             $kasKeluar->update($validated);

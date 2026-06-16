@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', 'Financial Dashboard')
 
@@ -85,9 +85,7 @@
     .greeting-text {
         font-size: 26px;
         font-weight: 800;
-        background: linear-gradient(135deg, #1e2a78 0%, #3b82f6 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+        color: #1e2a78;
         margin: 0;
         letter-spacing: -0.5px;
     }
@@ -882,13 +880,6 @@
             <h1 class="greeting-text">{{ $greeting }}, {{ $firstName }}!</h1>
         </div>
         <div class="user-welcome">
-            <a href="{{ route('settings.profile') }}" class="header-action-btn" title="Pengaturan Akun">
-                <i class="fas fa-cog"></i>
-            </a>
-            <div class="header-action-btn">
-                <i class="fas fa-bell"></i>
-                <div class="notification-dot"></div>
-            </div>
             <div class="user-profile-circle">{{ $initials }}</div>
         </div>
     </div>
@@ -896,8 +887,8 @@
 
 <!-- TOP FULL WIDTH SECTION -->
 <div class="top-dashboard-section">
-    @if(count($latestTransactions ?? []) > 0)
-        @php $first = $latestTransactions[0]; @endphp
+    @if(true)
+        @php $first = count($latestTransactions ?? []) > 0 ? $latestTransactions[0] : null; @endphp
         
         <div class="top-row-grid">
             <!-- SUMMARY CARDS (Swapped to Top) -->
@@ -907,7 +898,7 @@
                         <div class="summary-header" style="justify-content: space-between; align-items: flex-end; padding: 0 5px;">
                             <div class="chart-header-info" style="text-align: left; display: flex; flex-direction: column;">
                                 <span class="chart-header-amount" id="detailAmount" style="font-size: 18px; margin-bottom: 2px;">Rp{{ number_format($netBalance, 0, ',', '.') }}</span>
-                                <span class="chart-header-label" id="detailCategory" style="font-size: 9px;">TOTAL LABA BERSIH</span>
+                                <span class="chart-header-label" id="detailCategory" style="font-size: 9px;">ARUS KAS BERSIH</span>
                             </div>
                             <div class="period-info" style="display: flex; flex-direction: column; align-items: flex-end;">
                                 <span class="period-label" style="font-size: 9px; margin-bottom: 2px;">PERIODE</span>
@@ -959,12 +950,12 @@
                         </div>
 
                         <div class="summary-grid" style="gap: 15px; margin-top: 15px; grid-template-columns: 1fr 1fr;">
-                            <!-- Card 3: Total Penjualan -->
+                            <!-- Card 3: Total Pemasukan -->
                             <div class="summary-card" style="padding: 15px; border-radius: 20px;">
                                 <div class="card-top">
                                     <div class="card-title">
                                         <span class="label">TOTAL</span>
-                                        <span class="sub-label">PENJUALAN</span>
+                                        <span class="sub-label">PEMASUKAN</span>
                                     </div>
                                     <div class="card-icon icon-in" style="width: 30px; height: 30px; font-size: 12px;">
                                         <i class="fas fa-arrow-down"></i>
@@ -977,12 +968,12 @@
                                 </div>
                             </div>
 
-                            <!-- Card 4: Total Pembelian -->
+                            <!-- Card 4: Total Pengeluaran -->
                             <div class="summary-card" style="padding: 15px; border-radius: 20px;">
                                 <div class="card-top">
                                     <div class="card-title">
                                         <span class="label">TOTAL</span>
-                                        <span class="sub-label">PEMBELIAN</span>
+                                        <span class="sub-label">PENGELUARAN</span>
                                     </div>
                                     <div class="card-icon icon-out" style="width: 30px; height: 30px; font-size: 12px;">
                                         <i class="fas fa-arrow-up"></i>
@@ -1090,7 +1081,13 @@
                     </div>
                 </div>
             @empty
-                <div style="padding: 20px; text-align: center; color: #94a3b8; font-size: 12px;">No transactions found</div>
+                <div style="padding: 40px 20px; text-align: center;">
+                    <div style="width: 48px; height: 48px; background: #f1f5f9; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px auto;">
+                        <i class="fas fa-receipt" style="font-size: 20px; color: #cbd5e1;"></i>
+                    </div>
+                    <div style="font-size: 14px; font-weight: 600; color: #64748b; margin-bottom: 4px;">Belum ada transaksi</div>
+                    <div style="font-size: 12px; color: #94a3b8;">Tidak ada transaksi pada periode ini</div>
+                </div>
             @endforelse
         </div>
     </div>
@@ -1278,64 +1275,77 @@
     });
 
     // Auto-refresh logic for summary cards
-    new AutoRefresh({
-        apiUrl: "{{ route('api.dashboard.data') }}?period_type={{ $periodType }}&period_month={{ $periodMonth }}&start_date={{ $startDate }}&end_date={{ $endDate }}",
-        interval: 10000,
-        onUpdate: (data) => {
-            const formatCurrency = (val) => {
-                return new Intl.NumberFormat('id-ID', {
-                    style: 'currency',
-                    currency: 'IDR',
-                    minimumFractionDigits: 0,
-                    maximumFractionDigits: 0
-                }).format(val).replace('IDR', 'Rp');
-            };
+    // Wait for AutoRefresh to be loaded (deferred script)
+    function initAutoRefresh() {
+        if (typeof AutoRefresh === 'undefined') {
+            // Retry after 100ms if not loaded yet
+            setTimeout(initAutoRefresh, 100);
+            return;
+        }
 
-            if (data.periodLabel) document.getElementById('detailPeriodLabel').textContent = data.periodLabel;
-            if (data.balanceToday !== undefined) document.getElementById('detailBalanceToday').textContent = formatCurrency(data.balanceToday);
-            if (data.cashInToday !== undefined) document.getElementById('detailCashInToday').textContent = formatCurrency(data.cashInToday);
-            if (data.cashOutToday !== undefined) document.getElementById('detailCashOutToday').textContent = formatCurrency(data.cashOutToday);
-            if (data.totalTransactions !== undefined) document.getElementById('detailTotalTransactions').textContent = data.totalTransactions;
-            if (data.cashInThisMonth !== undefined) document.getElementById('detailTotalKasMasuk').textContent = formatCurrency(data.cashInThisMonth);
-            if (data.cashOutThisMonth !== undefined) document.getElementById('detailTotalKasKeluar').textContent = formatCurrency(data.cashOutThisMonth);
-            if (data.cashInPercentageTotal !== undefined) document.getElementById('detailCashInPercentage').textContent = data.cashInPercentageTotal + '%';
-            if (data.cashOutPercentageTotal !== undefined) document.getElementById('detailCashOutPercentage').textContent = data.cashOutPercentageTotal + '%';
-            if (data.netBalance !== undefined) document.getElementById('detailAmount').textContent = formatCurrency(data.netBalance);
+        new AutoRefresh({
+            apiUrl: "{{ route('api.dashboard.data') }}?period_type={{ $periodType }}&period_month={{ $periodMonth }}&start_date={{ $startDate }}&end_date={{ $endDate }}",
+            interval: 10000,
+            onUpdate: (data) => {
+                const formatCurrency = (val) => {
+                    return new Intl.NumberFormat('id-ID', {
+                        style: 'currency',
+                        currency: 'IDR',
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0
+                    }).format(val).replace('IDR', 'Rp');
+                };
 
-            // Update Chart
-            if (data.sparklineData && trendChart) {
-                trendChart.data.labels = data.sparklineData.dates;
-                trendChart.data.datasets[0].data = data.sparklineData.cashIn;
-                trendChart.data.datasets[1].data = data.sparklineData.cashOut;
-                trendChart.update('none'); // Update without animation for smoother refresh
-            }
+                if (data.periodLabel) document.getElementById('detailPeriodLabel').textContent = data.periodLabel;
+                if (data.balanceToday !== undefined) document.getElementById('detailBalanceToday').textContent = formatCurrency(data.balanceToday);
+                if (data.cashInToday !== undefined) document.getElementById('detailCashInToday').textContent = formatCurrency(data.cashInToday);
+                if (data.cashOutToday !== undefined) document.getElementById('detailCashOutToday').textContent = formatCurrency(data.cashOutToday);
+                if (data.totalTransactions !== undefined) document.getElementById('detailTotalTransactions').textContent = data.totalTransactions;
+                if (data.cashInThisMonth !== undefined) document.getElementById('detailTotalKasMasuk').textContent = formatCurrency(data.cashInThisMonth);
+                if (data.cashOutThisMonth !== undefined) document.getElementById('detailTotalKasKeluar').textContent = formatCurrency(data.cashOutThisMonth);
+                if (data.cashInPercentageTotal !== undefined) document.getElementById('detailCashInPercentage').textContent = data.cashInPercentageTotal + '%';
+                if (data.cashOutPercentageTotal !== undefined) document.getElementById('detailCashOutPercentage').textContent = data.cashOutPercentageTotal + '%';
+                if (data.netBalance !== undefined) document.getElementById('detailAmount').textContent = formatCurrency(data.netBalance);
+
+                // Update Chart
+                if (data.sparklineData && trendChart) {
+                    trendChart.data.labels = data.sparklineData.dates;
+                    trendChart.data.datasets[0].data = data.sparklineData.cashIn;
+                    trendChart.data.datasets[1].data = data.sparklineData.cashOut;
+                    trendChart.update('none'); // Update without animation for smoother refresh
+                }
 // ... rest of the onUpdate function remains the same
 
-            // Update Top Products list
-            if (data.topProducts && data.topProducts.length > 0) {
-                let html = '';
-                data.topProducts.forEach((product, index) => {
-                    html += `
-                        <div class="product-item">
-                            <div class="product-rank rank-${index + 1}">
-                                ${index + 1}
+                // Update Top Products list
+                if (data.topProducts && data.topProducts.length > 0) {
+                    let html = '';
+                    data.topProducts.forEach((product, index) => {
+                        html += `
+                            <div class="product-item">
+                                <div class="product-rank rank-${index + 1}">
+                                    ${index + 1}
+                                </div>
+                                <div class="product-info">
+                                    <div class="product-name">${product.name}</div>
+                                    <div class="product-stats">Volume Penjualan</div>
+                                </div>
+                                <div class="product-value">
+                                    <div class="product-qty">${new Intl.NumberFormat('id-ID').format(product.total)}</div>
+                                    <div class="product-label">Unit</div>
+                                </div>
                             </div>
-                            <div class="product-info">
-                                <div class="product-name">${product.name}</div>
-                                <div class="product-stats">Volume Penjualan</div>
-                            </div>
-                            <div class="product-value">
-                                <div class="product-qty">${new Intl.NumberFormat('id-ID').format(product.total)}</div>
-                                <div class="product-label">Unit</div>
-                            </div>
-                        </div>
-                    `;
-                });
-                document.getElementById('topProductsList').innerHTML = html;
-            } else if (data.topProducts && data.topProducts.length === 0) {
-                document.getElementById('topProductsList').innerHTML = '<div style="padding: 40px; text-align: center; color: #94a3b8;">Tidak ada data produk</div>';
+                        `;
+                    });
+                    document.getElementById('topProductsList').innerHTML = html;
+                } else if (data.topProducts && data.topProducts.length === 0) {
+                    document.getElementById('topProductsList').innerHTML = '<div style="padding: 40px; text-align: center; color: #94a3b8;">Tidak ada data produk</div>';
+                }
             }
-        }
-    });
+        });
+    }
+
+    // Initialize auto-refresh when ready
+    initAutoRefresh();
 </script>
 @endsection
+

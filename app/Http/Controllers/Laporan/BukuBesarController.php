@@ -10,10 +10,63 @@ use Illuminate\Http\Request;
 
 class BukuBesarController extends Controller
 {
+    /**
+     * Get counter account name for a journal entry
+     */
+    private function getCounterAccountName(GeneralJournal $journal): string
+    {
+        $oppositeType = $journal->type === 'debit' ? 'credit' : 'debit';
+
+        // Ambil semua pasangan berlawanan dengan reference sama
+        $counters = GeneralJournal::where('reference', $journal->reference)
+            ->where('id', '!=', $journal->id)
+            ->where('type', $oppositeType)
+            ->where('account_id', '!=', $journal->account_id)
+            ->with('account')
+            ->get();
+
+        if ($counters->isEmpty()) {
+            return '-';
+        }
+
+        if ($counters->count() === 1) {
+            return $counters->first()->account->name ?? '-';
+        }
+
+        // Jika lebih dari satu pasangan, pilih yang paling relevan berdasarkan tipe akun jurnal ini
+        $currentAccount = $journal->account;
+        $currentType = $currentAccount?->type ?? '';
+
+        // Prioritas: revenue/retur → pilih pasangan kas/bank (asset)
+        if (in_array($currentType, ['revenue'])) {
+            $preferred = $counters->filter(fn($c) => $c->account?->type === 'asset')->first();
+            if ($preferred) return $preferred->account->name;
+        }
+
+        // COGS/HPP → pilih pasangan asset (persediaan)
+        if (in_array($currentType, ['cogs'])) {
+            $preferred = $counters->filter(fn($c) => $c->account?->type === 'asset')->first();
+            if ($preferred) return $preferred->account->name;
+        }
+
+        // Asset (kas/bank) → pilih pasangan revenue atau expense
+        if ($currentType === 'asset') {
+            $preferred = $counters->filter(fn($c) => in_array($c->account?->type, ['revenue', 'expense', 'cogs', 'equity']))->first();
+            if ($preferred) return $preferred->account->name;
+        }
+
+        // Expense → pilih pasangan asset
+        if ($currentType === 'expense') {
+            $preferred = $counters->filter(fn($c) => $c->account?->type === 'asset')->first();
+            if ($preferred) return $preferred->account->name;
+        }
+
+        // Equity/Modal → bisa apa saja, ambil pertama
+        return $counters->first()->account->name ?? '-';
+    }
+
     public function index(Request $request)
     {
-        // Auto-sync before displaying
-        GeneralJournal::syncAll();
 
         $filterType = $request->input('filter_type', 'per_bulan');
         $yearInput = $request->input('year');
@@ -45,6 +98,34 @@ class BukuBesarController extends Controller
         } elseif ($filterType === 'all') {
             $startDate = null;
             $endDate = Carbon::now()->endOfDay();
+        }
+
+        // Build JU page map: journal_id -> JU page number
+        // Group journals by reference (same as jurnal umum), each group = 1 transaction row
+        // 10 groups per page
+        $juQuery = GeneralJournal::orderBy('journal_date', 'asc')->orderBy('id', 'asc');
+        if ($startDate && $endDate) {
+            $juQuery->whereBetween('journal_date', [$startDate, $endDate]);
+        }
+        $allJournals = $juQuery->get();
+
+        // Group by reference to find unique transactions (same as JU grouping)
+        $juGroups = [];
+        foreach ($allJournals as $j) {
+            $key = $j->reference ?? ($j->journal_date->format('Y-m-d H:i:s').'|'.$j->source_id.'|'.$j->id);
+            $juGroups[$key][] = $j->id;
+        }
+
+        // Map each journal_id to its JU page number (10 transactions per page)
+        $juPageMap = [];
+        $groupIndex = 0;
+        $perPage = 10;
+        foreach ($juGroups as $ids) {
+            $page = (int) floor($groupIndex / $perPage) + 1;
+            foreach ($ids as $jid) {
+                $juPageMap[$jid] = 'JU-'.str_pad($page, 2, '0', STR_PAD_LEFT);
+            }
+            $groupIndex++;
         }
 
         $orderRaw = "CASE 
@@ -124,6 +205,8 @@ class BukuBesarController extends Controller
                 $transactions[] = [
                     'journal' => $journal,
                     'balance' => $currentBalance,
+                    'counter_account_name' => $this->getCounterAccountName($journal),
+                    'ju_ref' => $juPageMap[$journal->id] ?? 'JU-01',
                 ];
             }
 
@@ -145,7 +228,7 @@ class BukuBesarController extends Controller
             7 => 'Juli', 8 => 'Agustus', 9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember',
         ];
 
-        return view('report.ledger', compact('ledgerData', 'allAccounts', 'accountId', 'year', 'month', 'years', 'months', 'filterType', 'startDate', 'endDate'));
+        return view('report.buku_besar.index', compact('ledgerData', 'allAccounts', 'accountId', 'year', 'month', 'years', 'months', 'filterType', 'startDate', 'endDate'));
     }
 
     public function exportExcel(Request $request)
@@ -420,6 +503,6 @@ class BukuBesarController extends Controller
 
         $allAccounts = ChartOfAccount::where('is_active', true)->orderBy('code')->get();
 
-        return view('report.ledger-print', compact('ledgerData', 'allAccounts', 'filterType', 'year', 'month', 'startDate', 'endDate', 'accountId'));
+        return view('report.buku_besar.print', compact('ledgerData', 'allAccounts', 'filterType', 'year', 'month', 'startDate', 'endDate', 'accountId'));
     }
 }

@@ -15,12 +15,23 @@ class ChartOfAccountController extends Controller
     {
         $accounts = ChartOfAccount::orderBy('code')->get();
 
-        return view('master.accounts', compact('accounts'));
+        // Hitung saldo berjalan per akun dari jurnal
+        foreach ($accounts as $account) {
+            $debit = \App\Models\GeneralJournal::where('account_id', $account->id)->where('type', 'debit')->sum('amount');
+            $credit = \App\Models\GeneralJournal::where('account_id', $account->id)->where('type', 'credit')->sum('amount');
+            if (in_array($account->type, ['asset', 'expense', 'cogs'])) {
+                $account->current_balance = $debit - $credit;
+            } else {
+                $account->current_balance = $credit - $debit;
+            }
+        }
+
+        return view('master.akun.index', compact('accounts'));
     }
 
     public function create()
     {
-        return view('master.accounts.create');
+        return view('master.akun.create');
     }
 
     public function store(Request $request)
@@ -30,14 +41,70 @@ class ChartOfAccountController extends Controller
                 'code' => 'required|unique:akun_coa,code',
                 'name' => 'required|string',
                 'type' => 'required|in:asset,liability,equity,revenue,expense,cogs',
+                'opening_balance' => 'nullable|numeric|min:0',
+                'opening_balance_date' => 'nullable|date',
+            ], [
+                'name.required' => 'Nama akun wajib diisi',
+                'code.required' => 'Kode akun wajib diisi',
+                'code.unique' => 'Kode akun sudah digunakan',
+                'type.required' => 'Kategori akun wajib dipilih',
             ]);
 
-            ChartOfAccount::create([
+            $openingBalance = $request->input('opening_balance');
+            // Strip formatting jika ada titik ribuan
+            if (is_string($openingBalance)) {
+                $openingBalance = (float) preg_replace('/[^0-9]/', '', $openingBalance);
+            }
+
+            $account = ChartOfAccount::create([
                 'code' => $validated['code'],
                 'name' => $validated['name'],
                 'type' => $validated['type'],
                 'is_active' => true,
+                'opening_balance' => $openingBalance ?? 0,
+                'opening_balance_date' => $request->input('opening_balance_date') ?: null,
             ]);
+
+            // Create opening balance journal entry jika ada
+            if ($openingBalance > 0) {
+                $date = $request->input('opening_balance_date') ?: '2000-01-01';
+                $isDebitNormal = in_array($account->type, ['asset', 'expense', 'cogs']);
+
+                // Jurnal utama untuk akun ini
+                GeneralJournal::create([
+                    'journal_date' => $date,
+                    'account_id'   => $account->id,
+                    'type'         => $isDebitNormal ? 'debit' : 'credit',
+                    'amount'       => $openingBalance,
+                    'reference'    => 'OB-' . $account->id,
+                    'source'       => 'opening_balance',
+                    'source_id'    => $account->id,
+                    'description'  => 'Saldo Awal - ' . $account->name,
+                ]);
+
+                // Jurnal pasangan: jika akun Asset/Expense → Credit Modal Pemilik
+                // jika akun Liability/Equity/Revenue → Debit Modal Pemilik
+                if ($isDebitNormal) {
+                    // Asset/Expense: Debit Akun ini → Credit Modal Pemilik
+                    $modalAccount = ChartOfAccount::where('code', '3100')->first()
+                        ?? ChartOfAccount::where('type', 'equity')->first();
+
+                    if ($modalAccount && $modalAccount->id !== $account->id) {
+                        GeneralJournal::create([
+                            'journal_date' => $date,
+                            'account_id'   => $modalAccount->id,
+                            'type'         => 'credit',
+                            'amount'       => $openingBalance,
+                            'reference'    => 'OB-' . $account->id,
+                            'source'       => 'opening_balance',
+                            'source_id'    => $account->id,
+                            'description'  => 'Saldo Awal - ' . $account->name,
+                        ]);
+                    }
+                }
+                // Jika akun itu sendiri adalah Modal/Equity, tidak perlu pasangan
+                // karena pasangan sudah dibuat dari sisi asset
+            }
 
             if ($request->expectsJson()) {
                 return response()->json(['success' => true, 'message' => 'Akun berhasil ditambahkan']);
@@ -59,7 +126,7 @@ class ChartOfAccountController extends Controller
     public function edit($id)
     {
         $account = ChartOfAccount::findOrFail($id);
-        return view('master.accounts.edit', compact('account'));
+        return view('master.akun.edit', compact('account'));
     }
 
     public function update(Request $request, ChartOfAccount $account)
@@ -69,13 +136,73 @@ class ChartOfAccountController extends Controller
                 'code' => 'required|unique:akun_coa,code,'.$account->id,
                 'name' => 'required|string',
                 'type' => 'required|in:asset,liability,equity,revenue,expense,cogs',
+                'opening_balance' => 'nullable|numeric|min:0',
+                'opening_balance_date' => 'nullable|date',
+            ], [
+                'name.required' => 'Nama akun wajib diisi',
+                'code.required' => 'Kode akun wajib diisi',
+                'code.unique' => 'Kode akun sudah digunakan',
+                'type.required' => 'Kategori akun wajib dipilih',
             ]);
+
+            $openingBalance = $request->input('opening_balance');
+            // Strip formatting jika ada titik ribuan
+            if (is_string($openingBalance)) {
+                $openingBalance = (float) preg_replace('/[^0-9]/', '', $openingBalance);
+            }
 
             $account->update([
                 'code' => $validated['code'],
                 'name' => $validated['name'],
                 'type' => $validated['type'],
+                'opening_balance' => $openingBalance ?? 0,
+                'opening_balance_date' => $request->input('opening_balance_date') ?: null,
             ]);
+
+            // Sync opening balance journal entry
+            GeneralJournal::where('source', 'opening_balance')
+                ->where('source_id', $account->id)
+                ->delete();
+
+            if ($openingBalance > 0) {
+                $date = $request->input('opening_balance_date') ?: '2000-01-01';
+                $isDebitNormal = in_array($account->type, ['asset', 'expense', 'cogs']);
+
+                // Jurnal utama untuk akun ini
+                GeneralJournal::create([
+                    'journal_date' => $date,
+                    'account_id'   => $account->id,
+                    'type'         => $isDebitNormal ? 'debit' : 'credit',
+                    'amount'       => $openingBalance,
+                    'reference'    => 'OB-' . $account->id,
+                    'source'       => 'opening_balance',
+                    'source_id'    => $account->id,
+                    'description'  => 'Saldo Awal - ' . $account->name,
+                ]);
+
+                // Jurnal pasangan: jika akun Asset/Expense → Credit Modal Pemilik
+                // jika akun Liability/Equity/Revenue → Debit Modal Pemilik
+                if ($isDebitNormal) {
+                    // Asset/Expense: Debit Akun ini → Credit Modal Pemilik
+                    $modalAccount = ChartOfAccount::where('code', '3100')->first()
+                        ?? ChartOfAccount::where('type', 'equity')->first();
+
+                    if ($modalAccount && $modalAccount->id !== $account->id) {
+                        GeneralJournal::create([
+                            'journal_date' => $date,
+                            'account_id'   => $modalAccount->id,
+                            'type'         => 'credit',
+                            'amount'       => $openingBalance,
+                            'reference'    => 'OB-' . $account->id,
+                            'source'       => 'opening_balance',
+                            'source_id'    => $account->id,
+                            'description'  => 'Saldo Awal - ' . $account->name,
+                        ]);
+                    }
+                }
+                // Jika akun itu sendiri adalah Modal/Equity, tidak perlu pasangan
+                // karena pasangan sudah dibuat dari sisi asset
+            }
 
             if ($request->expectsJson()) {
                 return response()->json(['success' => true, 'message' => 'Akun berhasil diperbarui']);

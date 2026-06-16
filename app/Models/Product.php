@@ -9,7 +9,7 @@ class Product extends Model
     protected $fillable = [
         'name', 'wood_type', 'product_category', 'size', 'cubic_content',
         'unit', 'price', 'cost', 'stock', 'initial_stock', 
-        'category_id', 'sales_account_id', 'hpp_account_id', 'inventory_account_id', 'is_active'
+        'category_id', 'sales_account_id', 'hpp_account_id', 'inventory_account_id', 'finished_goods_account_id', 'is_active'
     ];
 
     protected static function booted()
@@ -22,6 +22,20 @@ class Product extends Model
 
         static::updated(function ($product) {
             $product->syncInitialStockJournalEntry();
+
+            // Jika cost berubah, resync semua jurnal transaksi yang terkait
+            $costChanged = $product->getOriginal('cost') != $product->cost;
+            if ($costChanged) {
+                $product->salesTransactions()->each(function($kasMasuk) {
+                    $kasMasuk->syncJournalEntry();
+                });
+                $product->salesReturns()->each(function($retur) {
+                    $retur->syncJournalEntry();
+                });
+                $product->stockHistory()->each(function($ps) {
+                    $ps->syncJournalEntry();
+                });
+            }
         });
 
         static::deleted(function ($product) {
@@ -96,6 +110,11 @@ class Product extends Model
         return $this->belongsTo(ChartOfAccount::class, 'inventory_account_id');
     }
 
+    public function finishedGoodsAccount()
+    {
+        return $this->belongsTo(ChartOfAccount::class, 'finished_goods_account_id');
+    }
+
     public function stockHistory()
     {
         return $this->hasMany(ProductStock::class, 'product_id')->orderBy('date', 'desc');
@@ -116,14 +135,19 @@ class Product extends Model
         return (float) $this->stock;
     }
 
+    public function salesReturns()
+    {
+        return $this->hasMany(SalesReturn::class, 'product_id')->orderBy('date', 'desc');
+    }
+
     public function syncStock()
     {
         $initial = (float) $this->initial_stock;
         $added_adjustment = $this->stockHistory()->sum('quantity');
         $sold = $this->salesTransactions()->sum('quantity');
+        $returned = $this->salesReturns()->sum('quantity'); // stok kembali dari retur
 
-        // Pembelian (purchaseTransactions) diabaikan karena masih bahan mentah
-        $currentStock = $initial + $added_adjustment - $sold;
+        $currentStock = $initial + $added_adjustment - $sold + $returned;
         
         $this->stock = $currentStock;
         $this->saveQuietly();
@@ -180,8 +204,19 @@ class Product extends Model
             ];
         });
 
+        $returns = $this->salesReturns->map(function ($item) {
+            return (object) [
+                'id' => $item->id,
+                'date' => \Carbon\Carbon::parse($item->date),
+                'quantity' => (float) $item->quantity,
+                'price' => (float) ($item->amount / max($item->quantity, 1)),
+                'description' => 'Retur Penjualan' . ($item->description ? ': ' . $item->description : ''),
+                'type' => 'return',
+            ];
+        });
+
         // Sort by date ascending, but ensure 'initial' comes first if dates are tied
-        return $historyList->concat($adjustments)->concat($sales)
+        return $historyList->concat($adjustments)->concat($sales)->concat($returns)
             ->sort(function($a, $b) {
                 if ($a->date->equalTo($b->date)) {
                     if ($a->type === 'initial') return -1;
@@ -196,17 +231,34 @@ class Product extends Model
     {
         $history = $this->all_stock_history;
         $inflows = $history->whereIn('type', ['initial', 'adjustment', 'purchase'])->values();
-        // Use a more reliable way to get all sales, sorted by date
+
+        // Ambil semua penjualan urut tanggal
         $outflows = $this->salesTransactions()->orderBy('date', 'asc')->get();
+
+        // Ambil semua retur penjualan urut tanggal
+        $returns = $this->salesReturns()->orderBy('date', 'asc')->get();
 
         $allocation = [];
         $outflowQueue = [];
         foreach ($outflows as $o) {
             $outflowQueue[] = [
-                'id' => $o->id,
-                'date' => $o->date,
-                'quantity' => (float) $o->quantity,
+                'id'          => $o->id,
+                'date'        => $o->date,
+                'quantity'    => (float) $o->quantity,
                 'description' => $o->description ?? 'Penjualan',
+                'type'        => 'sale',
+            ];
+        }
+
+        // Tambahkan retur sebagai "pengembalian" ke queue (qty negatif = stok kembali)
+        $returnQueue = [];
+        foreach ($returns as $r) {
+            $returnQueue[] = [
+                'id'          => $r->id,
+                'date'        => $r->date,
+                'quantity'    => (float) $r->quantity,
+                'description' => 'Retur Penjualan' . ($r->description ? ': ' . $r->description : ''),
+                'type'        => 'return',
             ];
         }
 
@@ -215,28 +267,42 @@ class Product extends Model
             $remaining = (float) $inflow->quantity;
             $soldTo = [];
 
+            // Kurangi stok batch dengan penjualan
             if ($remaining > 0) {
                 for ($i = 0; $i < count($outflowQueue); $i++) {
                     if ($remaining <= 0) break;
                     if ($outflowQueue[$i]['quantity'] <= 0) continue;
 
                     $deduct = min($remaining, $outflowQueue[$i]['quantity']);
-                    
-                    // Important: Update the source array by reference or via index
                     $outflowQueue[$i]['quantity'] -= $deduct;
                     $remaining -= $deduct;
 
                     $soldTo[] = [
-                        'date' => $outflowQueue[$i]['date'],
-                        'quantity' => $deduct,
+                        'date'        => $outflowQueue[$i]['date'],
+                        'quantity'    => $deduct,
                         'description' => $outflowQueue[$i]['description'],
+                        'type'        => 'sale',
                     ];
                 }
             }
 
+            // Tambahkan retur ke soldItems (tampil di history batch ini)
+            foreach ($returnQueue as $ret) {
+                $soldTo[] = [
+                    'date'        => $ret['date'],
+                    'quantity'    => $ret['quantity'],
+                    'description' => $ret['description'],
+                    'type'        => 'return',
+                ];
+                $remaining += $ret['quantity']; // stok kembali
+            }
+
+            // Sort soldTo by date
+            usort($soldTo, fn($a, $b) => $a['date'] <=> $b['date']);
+
             $allocation[$key] = [
                 'sold_items' => $soldTo,
-                'remaining' => $remaining,
+                'remaining'  => $remaining,
             ];
         }
 

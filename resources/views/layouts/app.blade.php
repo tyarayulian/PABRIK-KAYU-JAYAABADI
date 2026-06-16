@@ -1,31 +1,41 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
+    <!-- Preconnect to external resources for faster loading -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    
+    <!-- DNS Prefetch for instant.page -->
+    <link rel="dns-prefetch" href="https://instant.page">
+    <link rel="dns-prefetch" href="https://unpkg.com">
+    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- CSRF TOKEN -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="icon" type="image/png" href="{{ asset('storage/images/logo 2.png') }}">
     <title>@yield('title') - Jaya Cash</title>
-    <!-- Feather Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Instant.page -->
-    <script src="https://instant.page/5.2.0" type="module"></script>
+    <!-- Critical CSS - Load font asynchronously -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"></noscript>
     
-    <!-- NProgress -->
-    <link rel="stylesheet" href="https://unpkg.com/nprogress@0.2.0/nprogress.css">
-    <script src="https://unpkg.com/nprogress@0.2.0/nprogress.js"></script>
+    <!-- Font Awesome - Async -->
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"></noscript>
+    
+    <!-- NProgress CSS - Async -->
+    <link rel="preload" href="https://unpkg.com/nprogress@0.2.0/nprogress.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://unpkg.com/nprogress@0.2.0/nprogress.css"></noscript>
+    
+    <!-- Scripts - Load di head dengan defer -->
+    <script defer src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <script defer src="https://unpkg.com/nprogress@0.2.0/nprogress.js"></script>
+    <script defer src="https://instant.page/5.2.0" type="module"></script>
     <style>
-        #nprogress .bar { background: #1e2a78 !important; height: 3px !important; }
-        #nprogress .spinner { display: none !important; }
-    </style>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
-
+        /* Critical CSS - Inline untuk fast first paint */
         * {
             margin: 0;
             padding: 0;
@@ -35,13 +45,18 @@
         html, body {
             background-color: #f8fafc;
             overflow-x: hidden;
-            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             color: #1a1a1a;
             min-height: 100vh;
         }
 
+        /* Font akan di-load async, fallback ke system fonts dulu */
+        .font-loaded {
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
         button, input, select, textarea {
-            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-family: inherit;
         }
 
         .container-wrapper {
@@ -73,37 +88,19 @@
         ::-webkit-scrollbar-thumb { background: #e0e0e0; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #d0d0d0; }
 
-        /* Print Styles - Hide Sidebar and Navigation */
+        /* NProgress inline styles */
+        #nprogress .bar { background: #1e2a78 !important; height: 3px !important; z-index: 99999 !important; }
+        #nprogress .spinner { display: none !important; }
+        #nprogress .peg { box-shadow: 0 0 10px #1e2a78, 0 0 5px #1e2a78 !important; }
+
+        /* Print Styles */
         @media print {
-            .container-wrapper {
-                padding: 0 !important;
-            }
-            
-            .sidebar,
-            .sidebar-container {
-                display: none !important;
-            }
-            
-            .main-content {
-                margin: 0 !important;
-                padding: 0 !important;
-            }
-            
-            .toast-container,
-            button:not(.print-only),
-            .btn,
-            .btn-primary,
-            .btn-outline,
-            .btn-outline-navy,
-            .actions-column,
-            input[type="text"],
-            input[type="date"],
-            input[type="month"],
-            select,
-            .filter-section,
-            .page-header-actions {
-                display: none !important;
-            }
+            .container-wrapper { padding: 0 !important; }
+            .sidebar, .sidebar-container { display: none !important; }
+            .main-content { margin: 0 !important; padding: 0 !important; }
+            .toast-container, button:not(.print-only), .btn, .actions-column,
+            input[type="text"], input[type="date"], input[type="month"],
+            select, .filter-section, .page-header-actions { display: none !important; }
         }
 
         @yield('styles')
@@ -184,6 +181,19 @@
         </style>
     </head>
 <body>
+    <!-- Loading Screen (hilang otomatis setelah page ready) -->
+    <div id="page-loader" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f8fafc; z-index: 999999; display: flex; align-items: center; justify-content: center; transition: opacity 0.3s ease;">
+        <div style="text-align: center;">
+            <div style="width: 50px; height: 50px; border: 3px solid #e2e8f0; border-top-color: #1e2a78; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+            <p style="margin-top: 16px; color: #64748b; font-size: 14px; font-weight: 600;">Loading...</p>
+        </div>
+    </div>
+    <style>
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+
     <div class="container-wrapper">
         @include('layouts.sidebar')
 
@@ -202,49 +212,34 @@
         </div>
     </div>
 
-    <script src="{{ asset('js/auto-refresh.js') }}"></script>
-    <script src="{{ asset('js/toast.js') }}?v={{ time() }}"></script>
-    <script src="{{ asset('js/modal.js') }}?v={{ time() }}"></script>
-    <script src="{{ asset('js/swal-replacement.js') }}?v={{ time() }}"></script>
+    <!-- App Scripts - Load setelah Turbo -->
+    <script defer src="{{ asset('js/auto-refresh.js') }}"></script>
+    <script defer src="{{ asset('js/toast.js') }}?v={{ time() }}"></script>
+    <script defer src="{{ asset('js/modal.js') }}?v={{ time() }}"></script>
+    <script defer src="{{ asset('js/swal-replacement.js') }}?v={{ time() }}"></script>
+    
     <script>
-        if (typeof feather !== 'undefined') {
-            feather.replace();
-        }
-
-        function formatRupiah(number) {
-            return new Intl.NumberFormat('id-ID', {
-                style: 'currency',
-                currency: 'IDR',
-                minimumFractionDigits: 0
-            }).format(number).replace('Rp', 'Rp ').trim();
-        }
-
-        // Use Toast component for all notifications
-        function showNotification(message, type = 'success') {
-            if (typeof Toast !== 'undefined') {
-                if (type === 'success') {
-                    Toast.success(message);
-                } else if (type === 'error') {
-                    Toast.error(message);
-                } else if (type === 'warning') {
-                    Toast.warning(message);
-                } else if (type === 'info') {
-                    Toast.info(message);
-                }
+        // Hide page loader
+        function hideLoader() {
+            const loader = document.getElementById('page-loader');
+            if (loader) {
+                loader.style.opacity = '0';
+                setTimeout(() => { if (loader.parentNode) loader.remove(); }, 300);
             }
         }
 
+        // Hide on DOMContentLoaded
         document.addEventListener('DOMContentLoaded', function() {
+            hideLoader();
+            document.body.classList.add('font-loaded');
+
+            // Flash message
             const flash = document.getElementById('globalFlashMessage');
             if (flash) {
                 const type = flash.getAttribute('data-type');
                 const message = flash.getAttribute('data-message');
-                if (message) {
-                    if (type === 'success') {
-                        Toast.success(message);
-                    } else if (type === 'error') {
-                        Toast.error(message);
-                    }
+                if (message && typeof Toast !== 'undefined') {
+                    Toast[type] ? Toast[type](message) : Toast.success(message);
                 }
             }
 
@@ -252,22 +247,38 @@
             const sidebarMenu = document.querySelector('.sidebar-menu-container');
             if (sidebarMenu) {
                 const scrollPos = sessionStorage.getItem('sidebarScroll');
-                if (scrollPos) {
-                    sidebarMenu.scrollTop = scrollPos;
-                }
+                if (scrollPos) sidebarMenu.scrollTop = parseInt(scrollPos);
 
-                // Save Scroll Position on Click
                 sidebarMenu.querySelectorAll('a').forEach(link => {
                     link.addEventListener('click', () => {
                         sessionStorage.setItem('sidebarScroll', sidebarMenu.scrollTop);
                     });
                 });
             }
+
+            // Initialize feather icons
+            if (typeof feather !== 'undefined' && feather.replace) {
+                feather.replace();
+            }
         });
 
-        NProgress.configure({ showSpinner: false });
-        NProgress.start();
-        window.addEventListener('load', () => NProgress.done());
+        // Hard timeout fallback - 1.5s maksimal
+        setTimeout(hideLoader, 1500);
+
+        // Global utilities
+        window.formatRupiah = function(number) {
+            return new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+                minimumFractionDigits: 0
+            }).format(number).replace('Rp', 'Rp ').trim();
+        };
+
+        window.showNotification = function(message, type = 'success') {
+            if (typeof Toast !== 'undefined') {
+                Toast[type] ? Toast[type](message) : Toast.success(message);
+            }
+        };
     </script>
     @yield('scripts')
 </body>

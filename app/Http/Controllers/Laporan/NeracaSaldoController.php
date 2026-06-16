@@ -170,7 +170,7 @@ class NeracaSaldoController extends Controller
             7 => 'Juli', 8 => 'Agustus', 9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember',
         ];
 
-        return view('report.trial_balance', compact(
+        return view('report.neraca_saldo.index', compact(
             'trialBalance', 'totalDebit', 'totalCredit', 'year', 'month',
             'years', 'months', 'filterType', 'startDate', 'endDate'
         ));
@@ -286,7 +286,7 @@ class NeracaSaldoController extends Controller
             }
         }
 
-        return view('report.trial_balance-print', compact('trialBalance', 'totalDebit', 'totalCredit', 'filterType', 'year', 'month', 'startDate', 'endDate'));
+        return view('report.neraca_saldo.print', compact('trialBalance', 'totalDebit', 'totalCredit', 'filterType', 'year', 'month', 'startDate', 'endDate'));
     }
 
     public function exportExcel(Request $request)

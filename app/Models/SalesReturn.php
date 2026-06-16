@@ -78,87 +78,95 @@ class SalesReturn extends Model
     {
         $this->deleteJournalEntry();
 
+        // Load product if not already loaded
+        if (!$this->relationLoaded('product')) {
+            $this->load('product', 'kasMasuk');
+        }
+
         if (!$this->product) return;
 
-        // Use the same reference for all journal entries of this return
-        $reference = 'RJ-'.$this->id;
+        // === JURNAL 1: Pembatalan Pendapatan ===
+        $reference1 = 'RJ-'.$this->id;
 
-        // 1. Debit Retur Penjualan
+        // Debit Retur Penjualan
         $returnAccount = ChartOfAccount::where('name', 'like', '%Retur Penjualan%')->first()
+            ?? ChartOfAccount::where('code', '4102')->first()
             ?? ChartOfAccount::where('code', '4110')->first()
             ?? ChartOfAccount::where('name', 'like', '%Retur%')->where('type', 'revenue')->first();
 
-        // If still not found, try to find or create a default one
         if (!$returnAccount) {
             $returnAccount = ChartOfAccount::firstOrCreate(
-                ['code' => '4110'],
+                ['code' => '4102'],
                 ['name' => 'Retur Penjualan', 'type' => 'revenue', 'is_active' => true]
             );
         }
 
-        $returnAccountId = $returnAccount->id;
+        GeneralJournal::create([
+            'journal_date' => $this->date,
+            'account_id'   => $returnAccount->id,
+            'type'         => 'debit',
+            'amount'       => $this->amount,
+            'reference'    => $reference1,
+            'source'       => 'sales_return',
+            'source_id'    => $this->id,
+        ]);
 
-        if ($returnAccountId) {
+        // Kredit Kas/Bank
+        $cashAccountId = null;
+        if ($this->kasMasuk && $this->kasMasuk->payment_account_id) {
+            $cashAccountId = $this->kasMasuk->payment_account_id;
+        } else {
+            $cashAccount = ChartOfAccount::where('type', 'asset')
+                ->where(function ($q) {
+                    $q->where('name', 'like', '%Kas%')
+                      ->orWhere('code', '1101');
+                })->first()
+                ?? ChartOfAccount::where('type', 'asset')->first();
+            $cashAccountId = $cashAccount?->id;
+        }
+
+        if ($cashAccountId) {
             GeneralJournal::create([
                 'journal_date' => $this->date,
-                'account_id' => $returnAccountId,
-                'type' => 'debit',
-                'amount' => $this->amount, // Sales Price Total
-                'reference' => $reference,
-                'source' => 'sales_return',
-                'source_id' => $this->id,
+                'account_id'   => $cashAccountId,
+                'type'         => 'credit',
+                'amount'       => $this->amount,
+                'reference'    => $reference1,
+                'source'       => 'sales_return',
+                'source_id'    => $this->id,
             ]);
         }
 
-        // 2. Credit Kas (Asset type, preferentially contains 'Kas' or code 1110)
-        $cashAccount = ChartOfAccount::where('type', 'asset')
-            ->where(function ($q) {
-                $q->where('name', 'like', '%Kas%')
-                    ->orWhere('code', '1110');
-            })
-            ->first();
-            
-        if (!$cashAccount) {
-            $cashAccount = ChartOfAccount::where('type', 'asset')->first();
-        }
-
-        if ($cashAccount) {
-            GeneralJournal::create([
-                'journal_date' => $this->date,
-                'account_id' => $cashAccount->id,
-                'type' => 'credit',
-                'amount' => $this->amount, // Sales Price Total
-                'reference' => $reference,
-                'source' => 'sales_return',
-                'source_id' => $this->id,
-            ]);
-        }
-
-        // 3. Jurnal Stok: Debit Persediaan, Credit HPP
-        if ($this->product->inventory_account_id && $this->product->hpp_account_id && $this->quantity > 0) {
-            // Use Cost (Modal) for Stock Journal
+        // === JURNAL 2: Pengembalian Stok ===
+        if ($this->product->hpp_account_id && $this->quantity > 0) {
+            $reference2 = 'RJ-'.$this->id.'-S';
             $hppAmount = $this->product->cost * $this->quantity;
 
-            // Debit Persediaan (Asset)
-            GeneralJournal::create([
-                'journal_date' => $this->date,
-                'account_id' => $this->product->inventory_account_id,
-                'type' => 'debit',
-                'amount' => $hppAmount,
-                'reference' => $reference,
-                'source' => 'sales_return',
-                'source_id' => $this->id,
-            ]);
+            $finishedGoodsAccountId = $this->product->finished_goods_account_id
+                ?? $this->product->inventory_account_id;
 
-            // Credit HPP (Expense/COGS)
+            if ($finishedGoodsAccountId) {
+                // Debit Persediaan Produk Jadi
+                GeneralJournal::create([
+                    'journal_date' => $this->date,
+                    'account_id'   => $finishedGoodsAccountId,
+                    'type'         => 'debit',
+                    'amount'       => $hppAmount,
+                    'reference'    => $reference2,
+                    'source'       => 'sales_return',
+                    'source_id'    => $this->id,
+                ]);
+            }
+
+            // Kredit HPP
             GeneralJournal::create([
                 'journal_date' => $this->date,
-                'account_id' => $this->product->hpp_account_id,
-                'type' => 'credit',
-                'amount' => $hppAmount,
-                'reference' => $reference,
-                'source' => 'sales_return',
-                'source_id' => $this->id,
+                'account_id'   => $this->product->hpp_account_id,
+                'type'         => 'credit',
+                'amount'       => $hppAmount,
+                'reference'    => $reference2,
+                'source'       => 'sales_return',
+                'source_id'    => $this->id,
             ]);
         }
     }

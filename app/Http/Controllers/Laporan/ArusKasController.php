@@ -120,7 +120,7 @@ class ArusKasController extends Controller
 
         $monthView = $month ? sprintf('%04d-%02d', $year, $month) : ($monthInput ?: date('Y-m'));
 
-        return view('report.cash_flow', [
+        return view('report.arus_kas.index', [
             'inByAccount' => $inByAccount,
             'outByAccount' => $outByAccount,
             'totalIn' => $totalIn,
@@ -351,7 +351,7 @@ class ArusKasController extends Controller
             ];
         }
 
-        return view('report.cash', [
+        return view('report.buku_kas.index', [
             'totalIn' => $totalIn,
             'totalOut' => $totalOut,
             'netBalance' => $netBalance,
@@ -641,7 +641,7 @@ class ArusKasController extends Controller
         $totalIn = array_sum($inByAccount);
         $totalOut = array_sum($outByAccount);
 
-        return view('report.cash_flow-print', compact('inByAccount', 'outByAccount', 'totalIn', 'totalOut'));
+        return view('report.arus_kas.print', compact('inByAccount', 'outByAccount', 'totalIn', 'totalOut'));
     }
 
     public function destroyBulk(Request $request)

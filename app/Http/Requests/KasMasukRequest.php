@@ -31,6 +31,7 @@ class KasMasukRequest extends FormRequest
             'date' => 'required|date',
             'category_id' => 'required_without:product_id|nullable|exists:categories,id',
             'account_id' => 'nullable|exists:akun_coa,id',
+            'payment_account_id' => 'nullable|exists:akun_coa,id',
             'product_id' => 'required_without:category_id|nullable|exists:products,id',
             'quantity' => 'nullable|numeric|min:0',
             'price' => 'nullable|numeric|min:0',

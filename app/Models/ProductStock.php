@@ -55,10 +55,12 @@ class ProductStock extends Model
         $this->deleteJournalEntry();
 
         if ($this->product && $this->quantity != 0) {
-            $inventoryAccountId = $this->product->inventory_account_id;
+            // Pakai akun Persediaan Produk Jadi jika ada, fallback ke inventory_account_id
+            $inventoryAccountId = $this->product->finished_goods_account_id 
+                ?? $this->product->inventory_account_id;
             
-            // Default to Equity/Capital if no specific adjustment account
-            $equityAccount = ChartOfAccount::where('code', '3100')->first() ?? ChartOfAccount::where('type', 'equity')->first();
+            $equityAccount = ChartOfAccount::where('code', '3100')->first() 
+                ?? ChartOfAccount::where('type', 'equity')->first();
 
             if ($inventoryAccountId && $equityAccount) {
                 $isIncrease = $this->quantity > 0;
@@ -66,7 +68,7 @@ class ProductStock extends Model
                 $amount = $absQuantity * ($this->price ?: $this->product->cost);
 
                 if ($isIncrease) {
-                    // Increase: Debit Inventory, Credit Equity
+                    // Masuk stok produk jadi: Debit Persediaan Produk Jadi, Credit Modal
                     GeneralJournal::create([
                         'journal_date' => $this->date,
                         'account_id' => $inventoryAccountId,
@@ -86,7 +88,7 @@ class ProductStock extends Model
                         'source_id' => $this->id,
                     ]);
                 } else {
-                    // Decrease: Debit Equity, Credit Inventory
+                    // Keluar stok: Debit Modal, Credit Persediaan Produk Jadi
                     GeneralJournal::create([
                         'journal_date' => $this->date,
                         'account_id' => $equityAccount->id,

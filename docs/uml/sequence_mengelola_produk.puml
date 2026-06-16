@@ -1,0 +1,124 @@
+@startuml Sequence Diagram_MengelolaProduk
+
+title sd Sequence Diagram_MengelolaProduk
+
+actor "Admin : Actor" as Admin
+participant "v : Produk" as V
+participant "c : ProductController" as C
+participant "m : Product" as M
+participant "m : ProductStock" as PS
+participant "m : ChartOfAccount" as COA
+
+== Lihat Daftar Produk ==
+
+Admin -> V : 1: bukaHalamanProduk()
+V -> C : 2: index(request) : void
+C -> M : 3: ambilSemuaProduk() : void
+M --> C : dataSemuaProduk
+C -> M : 4: syncStock() : void
+M --> C : stokTerbarui
+C --> V : 5: tampilkanDaftarProduk(groupedProducts) : void
+V --> Admin : 6: halamanDaftarProduk() : void
+
+== Tambah Produk Baru ==
+
+Admin -> V : 7: pilihAksi(Tambah Produk) : void
+V -> C : 8: create() : void
+C --> V : 9: tampilkanFormTambah() : void
+V --> Admin : 10: halamanFormTambah() : void
+
+Admin -> V : 11: isiFormDanSubmit(data) : void
+V -> C : 12: store(request) : void
+C -> COA : 13: cariAkunSales_HPP_Inventory() : void
+COA --> C : dataAkun
+
+alt [Akun inventory tidak ditemukan]
+    C --> V : 14: kembalikanKeForm() : void
+    V --> Admin : 15: pesan("Akun inventory belum dikonfigurasi") : void
+else [Akun ditemukan]
+    C -> M : 16: cekProdukSudahAda(wood_type, category, size) : void
+    M --> C : hasilPengecekan
+
+    alt [Produk sudah ada]
+        C -> PS : 17: tambahHistoryStokMasuk(data) : void
+        PS --> C : stokDitambahkan
+    else [Produk belum ada]
+        C -> M : 18: simpanProdukBaru(data) : void
+        M -> M : 19: syncInitialStockJournalEntry() : void
+        M --> C : produkTersimpan
+    end
+
+    alt [jika berhasil]
+        C --> V : 20: arahkanKeDaftarProduk() : void
+        V --> Admin : 21: pesan("Produk berhasil ditambahkan") : void
+    else [jika gagal]
+        C --> V : 22: kembalikanKeForm() : void
+        V --> Admin : 23: tampilkanPesanError() : void
+    end
+end
+
+== Edit Produk ==
+
+Admin -> V : 24: pilihAksi(Edit) : void
+V -> C : 25: edit(product) : void
+C -> M : 26: ambilDataProduk(id) : void
+M --> C : dataProduk
+C --> V : 27: tampilkanFormEdit(product) : void
+V --> Admin : 28: halamanFormEdit() : void
+
+Admin -> V : 29: ubahDataDanSubmit(data) : void
+V -> C : 30: update(request, product) : void
+C -> COA : 31: cariAkunSales_HPP_Inventory() : void
+COA --> C : dataAkun
+C -> M : 32: updateDataProduk(validated) : void
+M --> C : dataTerupdate
+C -> M : 33: syncStock() : void
+M --> C : stokTerbarui
+
+alt [jika berhasil]
+    C --> V : 34: arahkanKeDaftarProduk() : void
+    V --> Admin : 35: pesan("Produk berhasil diperbarui") : void
+else [jika gagal]
+    C --> V : 36: kembalikanKeForm() : void
+    V --> Admin : 37: tampilkanPesanError() : void
+end
+
+== Hapus Produk ==
+
+Admin -> V : 38: pilihAksi(Hapus) : void
+V -> C : 39: destroy(product) : void
+C -> M : 40: cekProdukDigunakanTransaksi(id) : void
+M --> C : hasilPengecekan
+
+alt [Produk masih digunakan transaksi]
+    C --> V : 41: tampilkanPesanGagal() : void
+    V --> Admin : 42: pesan("Produk tidak dapat dihapus karena masih digunakan dalam transaksi") : void
+else [Hapus berhasil]
+    C -> M : 43: hapusData(id) : void
+    M -> M : 44: deleteInitialStockJournalEntry() : void
+    M --> C : databerhasilDihapus
+    C --> V : 45: arahkanKeDaftarProduk() : void
+    V --> Admin : 46: pesan("Produk berhasil dihapus") : void
+end
+
+== Tambah Stok Produk ==
+
+Admin -> V : 47: pilihAksi(Tambah Stok) : void
+V -> C : 48: addStock(product) : void
+C --> V : 49: tampilkanFormTambahStok(product) : void
+V --> Admin : 50: halamanFormTambahStok() : void
+
+Admin -> V : 51: isiFormStokDanSubmit(data) : void
+V -> C : 52: storeStock(request, product) : void
+C -> PS : 53: simpanHistoryStok(data) : void
+PS --> C : stokTersimpan
+
+alt [jika berhasil]
+    C --> V : 54: arahkanKeDaftarProduk() : void
+    V --> Admin : 55: pesan("Stok berhasil ditambahkan") : void
+else [jika gagal]
+    C --> V : 56: kembalikanKeForm() : void
+    V --> Admin : 57: tampilkanPesanError() : void
+end
+
+@enduml

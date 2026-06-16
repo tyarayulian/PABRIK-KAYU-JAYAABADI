@@ -35,8 +35,44 @@ class GeneralJournal extends Model
         try {
             \DB::beginTransaction();
 
-            // 1. Delete all auto-generated journal entries
+            // 1. Delete all auto-generated journal entries (keep opening_balance)
             self::whereIn('source', ['cash_in', 'cash_out', 'product_stock', 'initial_stock', 'sales_return'])->delete();
+
+            // 2. Re-sync opening balances for all accounts
+            self::where('source', 'opening_balance')->delete();
+            $openingAccounts = \App\Models\ChartOfAccount::where('opening_balance', '>', 0)->get();
+            $modalAccount = \App\Models\ChartOfAccount::where('code', '3100')->first()
+                ?? \App\Models\ChartOfAccount::where('type', 'equity')->first();
+
+            foreach ($openingAccounts as $account) {
+                $date = $account->opening_balance_date ?? \Carbon\Carbon::parse('2000-01-01');
+                $isDebitNormal = in_array($account->type, ['asset', 'expense', 'cogs']);
+
+                // Buat entri untuk akun itu sendiri
+                self::create([
+                    'journal_date' => $date,
+                    'account_id'   => $account->id,
+                    'type'         => $isDebitNormal ? 'debit' : 'credit',
+                    'amount'       => $account->opening_balance,
+                    'reference'    => 'OB-' . $account->id,
+                    'source'       => 'opening_balance',
+                    'source_id'    => $account->id,
+                ]);
+
+                // Untuk akun Asset: otomatis buat pasangan ke Modal Pemilik
+                if ($isDebitNormal && $modalAccount && $modalAccount->id !== $account->id) {
+                    self::create([
+                        'journal_date' => $date,
+                        'account_id'   => $modalAccount->id,
+                        'type'         => 'credit',
+                        'amount'       => $account->opening_balance,
+                        'reference'    => 'OB-' . $account->id,
+                        'source'       => 'opening_balance',
+                        'source_id'    => $account->id,
+                    ]);
+                }
+                // Untuk akun Equity/Liability yang diisi manual: tidak perlu pasangan
+            }
 
             // 2. Collect all source transactions to sort them chronologically
             $transactions = collect();

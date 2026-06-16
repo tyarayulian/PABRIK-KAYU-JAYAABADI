@@ -26,7 +26,7 @@ class KasMasukController extends Controller
             })
             ->orderBy('code')->get();
 
-        return view('cash.cash_in_index', compact('cashIns', 'categories', 'accounts'));
+        return view('transaksi-kas.kas_masuk_index', compact('cashIns', 'categories', 'accounts'));
     }
 
     public function create(Request $request)
@@ -55,9 +55,17 @@ class KasMasukController extends Controller
             ->values();
         $chartOfAccounts = ChartOfAccount::where('is_active', true)->orderBy('code')->get();
         
+        $cashAccounts = ChartOfAccount::where('is_active', true)
+            ->where('type', 'asset')
+            ->where(function($q) {
+                $q->where('name', 'like', '%Kas%')
+                  ->orWhere('name', 'like', '%Bank%');
+            })
+            ->orderBy('code')->get();
+
         $selectedProductId = $request->get('product_id');
 
-        return view('transaksi.kas-masuk.create', compact('categories', 'products', 'chartOfAccounts', 'selectedProductId'));
+        return view('transaksi-produk.penjualan.create', compact('categories', 'products', 'chartOfAccounts', 'selectedProductId', 'cashAccounts'));
     }
 
     public function edit(KasMasuk $kasMasuk)
@@ -86,7 +94,15 @@ class KasMasukController extends Controller
             ->values();
         $chartOfAccounts = ChartOfAccount::where('is_active', true)->orderBy('code')->get();
 
-        return view('transaksi.kas-masuk.edit', compact('kasMasuk', 'categories', 'products', 'chartOfAccounts'));
+        $cashAccounts = ChartOfAccount::where('is_active', true)
+            ->where('type', 'asset')
+            ->where(function($q) {
+                $q->where('name', 'like', '%Kas%')
+                  ->orWhere('name', 'like', '%Bank%');
+            })
+            ->orderBy('code')->get();
+
+        return view('transaksi-produk.penjualan.edit', compact('kasMasuk', 'categories', 'products', 'chartOfAccounts', 'cashAccounts'));
     }
 
     public function getCategoryItems(Request $request)
@@ -130,6 +146,22 @@ class KasMasukController extends Controller
             $validated['quantity'] = ! empty($validated['quantity']) ? (int) round((float) $validated['quantity']) : 0;
             $validated['price'] = ! empty($validated['price']) ? (float) $validated['price'] : 0;
             $validated['category_id'] = ! empty($validated['category_id']) ? $validated['category_id'] : null;
+
+            // Validasi stok jika transaksi melibatkan produk
+            if (!empty($validated['product_id']) && $validated['quantity'] > 0) {
+                $product = Product::find($validated['product_id']);
+                if ($product) {
+                    $product->syncStock();
+                    if ($validated['quantity'] > $product->stock) {
+                        \DB::rollBack();
+                        $msg = "Stok tidak cukup. Sisa stok: {$product->stock} {$product->unit}, diminta: {$validated['quantity']} {$product->unit}.";
+                        if ($request->ajax()) {
+                            return response()->json(['success' => false, 'message' => $msg], 422);
+                        }
+                        return back()->with('error', $msg)->withInput();
+                    }
+                }
+            }
 
             $now = \Carbon\Carbon::now();
             $validated['date'] = \Carbon\Carbon::parse($validated['date'])
@@ -194,7 +226,7 @@ class KasMasukController extends Controller
             ]);
         }
 
-        return view('transaksi.kas-masuk.show', compact('kasMasuk'));
+        return view('transaksi-produk.penjualan.show', compact('kasMasuk'));
     }
 
     /**
@@ -211,6 +243,25 @@ class KasMasukController extends Controller
             $validated['quantity'] = ! empty($validated['quantity']) ? (int) round((float) $validated['quantity']) : 0;
             $validated['price'] = ! empty($validated['price']) ? (float) $validated['price'] : 0;
             $validated['category_id'] = ! empty($validated['category_id']) ? $validated['category_id'] : null;
+
+            // Validasi stok jika transaksi melibatkan produk
+            if (!empty($validated['product_id']) && $validated['quantity'] > 0) {
+                $product = Product::find($validated['product_id']);
+                if ($product) {
+                    $product->syncStock();
+                    // Stok tersedia = stok sekarang + qty lama (karena kita update, qty lama dikembalikan dulu)
+                    $oldQty = $kasMasuk->product_id == $validated['product_id'] ? $kasMasuk->quantity : 0;
+                    $availableStock = $product->stock + $oldQty;
+                    if ($validated['quantity'] > $availableStock) {
+                        \DB::rollBack();
+                        $msg = "Stok tidak cukup. Stok tersedia: {$availableStock} {$product->unit}, diminta: {$validated['quantity']} {$product->unit}.";
+                        if ($request->ajax()) {
+                            return response()->json(['success' => false, 'message' => $msg], 422);
+                        }
+                        return back()->with('error', $msg)->withInput();
+                    }
+                }
+            }
 
             $inputDate = \Carbon\Carbon::parse($validated['date']);
             if ($inputDate->isSameDay($kasMasuk->date)) {
@@ -273,6 +324,17 @@ class KasMasukController extends Controller
     {
         \DB::beginTransaction();
         try {
+            // Cek apakah ada retur penjualan yang terkait
+            $returCount = \App\Models\SalesReturn::where('kas_masuk_id', $kasMasuk->id)->count();
+            if ($returCount > 0) {
+                if (request()->ajax() || request()->wantsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => "Transaksi tidak dapat dihapus karena masih memiliki {$returCount} data retur penjualan. Hapus retur terlebih dahulu."
+                    ], 422);
+                }
+                return back()->with('error', "Transaksi tidak dapat dihapus karena masih memiliki {$returCount} data retur penjualan. Hapus retur terlebih dahulu.");
+            }
             if ($kasMasuk->file_path) {
                 Storage::disk('public')->delete($kasMasuk->file_path);
             }
